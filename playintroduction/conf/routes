@@ -1,0 +1,17 @@
+# Routes
+# This file defines all application routes (Higher priority routes first)
+# ~~~~
+
+# Home page
+GET     /                           	controllers.Application.index()
+
+GET		/product/:name/price			controllers.Product.getPrice(name: String)
+GET		/product/:name/new				controllers.Product.create(name: String)
+GET		/product/:name/add/:comp/:units		controllers.Product.addComponent(name: String, comp: String, units: java.lang.Integer)
+
+GET		/component/:name/price			controllers.Component.getPrice(name: String)	
+GET		/component/:name/price/:price	controllers.Component.setPrice(name:String, price: String)
+GET		/component/:name/new			controllers.Component.create(name: String)
+
+# Map static resources from the /public folder to the /assets URL path
+GET     /assets/*file               controllers.Assets.at(path="/public", file)
