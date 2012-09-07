@@ -35,7 +35,7 @@ public class Product extends Controller {
 	}
 
 	public static Result addComponent(String productName, String componentName,
-			Integer units) {
+			java.lang.Integer units) {
 		ProductModel pm = ProductModel.find.byId(productName);
 		ComponentModel cm = ComponentModel.find.byId(componentName);
 
