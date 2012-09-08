@@ -124,7 +124,7 @@ public class Product extends Controller {
 			um.units = units;
 			Ebean.save(um);
 
-			recalculatePrice(pm);
+			recalculatePrice(pm.productName);
 
 			result = ok("Component '" + componentName + "' added");
 		} else {
@@ -137,16 +137,58 @@ public class Product extends Controller {
 		return result;
 	}
 
-	private static void recalculatePrice(final ProductModel pm) {
-		final RecalculatePriceMsg msg = new RecalculatePriceMsg();
-		msg.productName = pm.productName;
-
-		ActorRef productsActor = Akka.system().actorFor("/user/product_" + pm.productName);
-		if (productsActor instanceof EmptyLocalActorRef) {
-			Logger.info("Creating product actor");
-			productsActor = Akka.system().actorOf(
-					new Props(ProductActor.class), "product_" + pm.productName);
+	/**
+	 * Recalculates a product price
+	 * 
+	 * @param productName The product to calculate
+	 */
+	private static void recalculatePrice(final String productName) {
+		if(Logger.isDebugEnabled()) {
+			Logger.debug("> Product.recalculatePrice(String)");
 		}
-		productsActor.tell(msg);
+
+		// Create the message to dispatch
+		final RecalculatePriceMsg msg = new RecalculatePriceMsg();
+		msg.productName = productName;
+
+		// Lookup the product actor
+		final ActorRef productActor = lookupProductActor(productName);
+		productActor.tell(msg);
+
+		if(Logger.isDebugEnabled()) {
+			Logger.debug("< Product.recalculatePrice(String)");
+		}
+	}
+
+	/**
+	 * Looks up (or creates) the given product actor
+	 * 
+	 * @param productName The product to look up
+	 * @return The <code>ActorRef</code>
+	 */
+	protected static ActorRef lookupProductActor(final String productName) {
+		if(Logger.isDebugEnabled()) {
+			Logger.debug("> Product.lookupProductActor(String)");
+		}
+
+		// Look up the actor
+		ActorRef productActor = Akka.system().actorFor("/user/product_" + productName);
+		if (productActor instanceof EmptyLocalActorRef) {
+			if(Logger.isDebugEnabled()) {
+				Logger.debug("Creating product actor");
+			}
+			
+			try {
+				productActor = Akka.system().actorOf(
+					new Props(ProductActor.class), "product_" + productName);
+			} catch (Exception e) {
+				Logger.trace(e.getMessage(), e);
+			}
+		}
+
+		if(Logger.isDebugEnabled()) {
+			Logger.debug("< Product.lookupProductActor(String)");
+		}
+		return productActor;
 	}
 }

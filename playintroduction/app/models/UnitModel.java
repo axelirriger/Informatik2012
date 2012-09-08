@@ -47,7 +47,13 @@ public class UnitModel {
 	/**
 	 * The finder operation to look up unit models by the Product
 	 */
-	public static Finder<ProductModel, UnitModel> find = new Finder<ProductModel, UnitModel>(
+	public static Finder<ProductModel, UnitModel> findByProduct = new Finder<ProductModel, UnitModel>(
 			ProductModel.class, UnitModel.class);
+
+	/**
+	 * The finder operation to look up unit models by the Component
+	 */
+	public static Finder<ComponentModel, UnitModel> findByComponent = new Finder<ComponentModel, UnitModel>(
+			ComponentModel.class, UnitModel.class);
 
 }
