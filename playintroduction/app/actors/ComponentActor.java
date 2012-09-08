@@ -4,9 +4,9 @@ import java.util.List;
 
 import com.avaje.ebean.Ebean;
 
-import messages.RecalculatePriceMsg;
-import messages.UpdateComponentPriceMsg;
 import models.UnitModel;
+import actors.messages.RecalculatePriceMsg;
+import actors.messages.UpdateComponentPriceMsg;
 import akka.actor.ActorRef;
 import akka.actor.EmptyLocalActorRef;
 import akka.actor.Props;
@@ -40,26 +40,29 @@ public class ComponentActor extends UntypedActor {
 			LOG.debug("> update(UpdateComponentPriceMsg)");
 		}
 
+		final String componentName = msg.component;
+		
 		/*
-		 * Load all products this component goes into
+		 * Load all products this component supports
 		 */
 		final List<UnitModel> ums = Ebean.find(UnitModel.class).where()
-				.eq("component_name", msg.component).findList();
+				.eq("component_name", componentName).findList();
 		for (final UnitModel um : ums) {
+			final RecalculatePriceMsg prMsg = new RecalculatePriceMsg();
+			prMsg.productName = um.product.productName;
+
 			/*
 			 * Create a new product actor for each product involved
 			 */
-			if (getContext().actorFor(um.product.name) instanceof EmptyLocalActorRef) {
-				getContext().actorOf(new Props(ProductActor.class),
-						um.product.name);
+			ActorRef ref = getContext().actorFor("product_" + um.product.productName);
+			if (ref instanceof EmptyLocalActorRef) {
+				ref = getContext().actorOf(new Props(ProductActor.class),
+						"product_" + um.product.productName);
 			}
-			final ActorRef ref = getContext().actorFor(um.product.name);
 
 			/*
 			 * Make it recalculate
 			 */
-			final RecalculatePriceMsg prMsg = new RecalculatePriceMsg();
-			prMsg.productName = um.product.name;
 			ref.tell(prMsg, getSelf());
 		}
 

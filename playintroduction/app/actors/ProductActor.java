@@ -4,9 +4,9 @@ import java.util.List;
 
 import com.avaje.ebean.Ebean;
 
-import messages.RecalculatePriceMsg;
 import models.ProductModel;
 import models.UnitModel;
+import actors.messages.RecalculatePriceMsg;
 import akka.actor.UntypedActor;
 import akka.event.Logging;
 import akka.event.LoggingAdapter;
@@ -15,15 +15,15 @@ public class ProductActor extends UntypedActor {
 	final LoggingAdapter LOG = Logging.getLogger(getContext().system(), this);
 	
 	@Override
-	public void onReceive(final Object arg0) throws Exception {
+	public void onReceive(final Object msg) throws Exception {
 		if(LOG.isDebugEnabled()) {
 			LOG.debug("> onReceive(Object)");
 		}
 		
-		if(arg0 instanceof RecalculatePriceMsg)
-			calc((RecalculatePriceMsg) arg0);
+		if(msg instanceof RecalculatePriceMsg)
+			calc((RecalculatePriceMsg) msg);
 		else
-			unhandled(arg0);
+			unhandled(msg);
 
 		if(LOG.isDebugEnabled()) {
 			LOG.debug("< onReceive(Object)");
@@ -36,7 +36,7 @@ public class ProductActor extends UntypedActor {
 		}
 	
 		// Load the product
-		final ProductModel product = ProductModel.find.byId(msg.productName);
+		final ProductModel product = ProductModel.findByName.byId(msg.productName);
 
 		// Calc its price
 		long pricetotal = 0;
@@ -46,13 +46,14 @@ public class ProductActor extends UntypedActor {
 			int units = um.units;
 			pricetotal += um.component.pricePerUnit * units;
 		}
-		product.price = pricetotal;
+		LOG.info("Calculated new price for '" + msg.productName + "' to " + pricetotal);
+		product.pricePerUnit = pricetotal;
+
 		// Update its price in the DB
 		Ebean.update(product);
-
+		
 		if(LOG.isDebugEnabled()) {
 			LOG.debug("< calc(RecalculatePriceMsg)");
 		}
 	}
-
 }
