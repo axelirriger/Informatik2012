@@ -41,7 +41,7 @@ public class ProductActor extends UntypedActor {
 		// Calc its price
 		long pricetotal = 0;
 		final List<UnitModel> list = Ebean.find(UnitModel.class).where()
-				.eq("product_name", msg.productName).findList();
+				.eq("product_product_name", msg.productName).findList();
 		for (final UnitModel um : list) {
 			int units = um.units;
 			pricetotal += um.component.pricePerUnit * units;

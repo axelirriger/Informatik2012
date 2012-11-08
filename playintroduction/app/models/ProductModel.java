@@ -1,6 +1,5 @@
 package models;
 
-import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 
@@ -19,13 +18,11 @@ public class ProductModel extends Model {
 	 * The unique identifier of a product is its name.
 	 */
 	@Id
-	@Column(name="PRODUCT_NAME")
 	public String productName;
 	
 	/**
 	 * The price of a product
 	 */
-	@Column(name="UNIT_PRICE")
 	public Long pricePerUnit;
 
 	/**

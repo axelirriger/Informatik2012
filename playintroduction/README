@@ -24,7 +24,7 @@ Obtain the product price ( /product/:name/price )
 	/product/PRODUCT/price  --> returns 800 (40*20)
 
 Update the component price.This triggers a price computation.
-	component/COMPONENT_A/price/20
+	/component/COMPONENT_A/price/20
 Obtain the product price ( /product/:name/price )
 	/product/PRODUCT/price  --> returns 200 (20*20)
 	

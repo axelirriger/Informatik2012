@@ -109,7 +109,7 @@ public class Component extends Controller {
 		Result result = null;
 		if (ComponentModel.findByName.byId(name) == null) {
 			final ComponentModel cm = new ComponentModel();
-			cm.name = name;
+			cm.componentName = name;
 			cm.pricePerUnit = 0l;
 			Ebean.save(cm);
 			result = ok("Component created");

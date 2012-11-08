@@ -1,6 +1,5 @@
 package models;
 
-import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 
@@ -10,7 +9,7 @@ import play.db.ebean.Model;
  * The class for storing a component.
  * 
  * @author Axel Irriger
- *
+ * 
  */
 @Entity
 public class ComponentModel extends Model {
@@ -19,13 +18,11 @@ public class ComponentModel extends Model {
 	 * The unique key is the component name
 	 */
 	@Id
-	@Column(name="COMPONENT_NAME")
-	public String name;
+	public String componentName;
 
 	/**
 	 * The price per unit
 	 */
-	@Column(name="UNIT_PRICE")
 	public Long pricePerUnit;
 
 	/**

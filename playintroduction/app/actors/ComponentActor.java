@@ -46,7 +46,7 @@ public class ComponentActor extends UntypedActor {
 		 * Load all products this component supports
 		 */
 		final List<UnitModel> ums = Ebean.find(UnitModel.class).where()
-				.eq("component_name", componentName).findList();
+				.eq("component_component_name", componentName).findList();
 		for (final UnitModel um : ums) {
 			final RecalculatePriceMsg prMsg = new RecalculatePriceMsg();
 			prMsg.productName = um.product.productName;
