@@ -1,0 +1,16 @@
+@(productForm: Form[forms.ProductForm])
+
+@newProduct = {
+	@helper.form(action = routes.Product.submit()) {
+    	@helper.inputText(productForm("productName"))
+	}
+}
+
+<html>
+	<head>
+	</head>
+	
+	<body>
+		@newProduct
+	</body>
+</html>

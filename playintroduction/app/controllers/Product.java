@@ -4,7 +4,9 @@ import models.ComponentModel;
 import models.ProductModel;
 import models.UnitModel;
 import play.Logger;
+import play.data.Form;
 import play.libs.Akka;
+import play.mvc.Content;
 import play.mvc.Controller;
 import play.mvc.Result;
 import actors.ProductActor;
@@ -15,6 +17,8 @@ import akka.actor.Props;
 
 import com.avaje.ebean.Ebean;
 
+import forms.ProductForm;
+
 /**
  * The controller for Products.
  * 
@@ -23,6 +27,19 @@ import com.avaje.ebean.Ebean;
  */
 public class Product extends Controller {
 
+	private static Form<ProductForm> productForm = form(ProductForm.class);
+	
+	public static Result submit() {
+		ProductForm pf = productForm.bindFromRequest().get();
+		return create(pf.productName);
+	}
+	
+	public static Result read() {
+		Content content = views.html.product.render(productForm);
+		
+		return ok(content);
+	}
+	
 	/**
 	 * Looks up the price of a given product name
 	 * 

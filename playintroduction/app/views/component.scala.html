@@ -1,0 +1,19 @@
+@(componentForm: Form[forms.ComponentForm])
+
+@newComponent = {
+	@helper.form(action = routes.Component.submit()) {
+    	@helper.inputText(componentForm("componentName"))
+    	@helper.inputText(componentForm("componentPrice"))
+    	<input type="submit"/>
+	}
+}
+
+
+<html>
+	<head>
+	</head>
+	
+	<body>
+		@newComponent
+	</body>
+</html>

@@ -27,4 +27,21 @@ Update the component price.This triggers a price computation.
 	/component/COMPONENT_A/price/20
 Obtain the product price ( /product/:name/price )
 	/product/PRODUCT/price  --> returns 200 (20*20)
-	
+
+
+== INSTALLATION ==
+
+- Download and install a Java SDK (6 oder 7)
+- Download latest Play!-Framework (http://www.playframework.org, 2.0.4 as of now)
+- Clone/Checkout the repository
+- Open a console
+- Add Play! installation directory and JDK bin-directory to your path
+- Change to the cloned directory of this application and start it with
+	play run
+- Then navigate to http://localhost:9000
+
+
+== Integration with eclipse ==
+To integrate the application with eclipse, enter
+	play eclipsify
+in the cloned directory and import the project into eclipse.
