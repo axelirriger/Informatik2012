@@ -2,21 +2,41 @@ package controllers;
 
 import java.util.List;
 
-import com.avaje.ebean.Ebean;
-
 import models.PollEntry;
 import models.PollModel;
-import forms.PollEntryForm;
-import forms.PollForm;
 import play.Logger;
 import play.data.Form;
 import play.mvc.Content;
 import play.mvc.Controller;
 import play.mvc.Result;
 
+import com.avaje.ebean.Ebean;
+
+import forms.PollEntryForm;
+import forms.PollForm;
+
 public class PollController extends Controller {
 
 	private static Form<PollForm> pollForm = form(PollForm.class);
+	
+	public static Result showPolls() {
+		if (Logger.isDebugEnabled()) {
+			Logger.debug("> PollController.showPolls()");
+		}
+
+		final long start = System.currentTimeMillis();
+		final List<PollModel> pms = PollModel.findByName.all();
+		final long end = System.currentTimeMillis();
+
+		if (Logger.isDebugEnabled()) {
+			Logger.debug("PollController.showPolls: Loading in " + (end - start)
+					+ " msec");
+		}
+		
+		Content html = views.html.polls.render(pms);
+		
+		return ok(views.html.pageframe.render("content",html));
+	}
 
 	public static Result newPoll() {
 		if (Logger.isDebugEnabled()) {
@@ -32,7 +52,7 @@ public class PollController extends Controller {
 					+ (end - start) + " msec");
 			Logger.debug("< PollController.newPoll()");
 		}
-		return ok(html);
+		return ok(views.html.pageframe.render("content",html));
 	}
 
 	public static Result submit() {
@@ -90,7 +110,7 @@ public class PollController extends Controller {
 				Logger.debug("PollController.submit: Saving in "
 						+ (end - start) + " msec");
 			}
-			res = ok("Poll created");
+			res = doPoll(pm.name);
 		} else {
 			res = badRequest("Poll already exists");
 		}
@@ -162,7 +182,7 @@ public class PollController extends Controller {
 			Content html = views.html.doPoll.render(pm, entries, form(PollEntryForm.class));
 			
 			
-			res = ok(html);
+			res = ok(views.html.pageframe.render("content",html));
 		} else {
 			res = badRequest("Poll does not exist");
 		}
@@ -191,7 +211,7 @@ public class PollController extends Controller {
 		pe.option3 = pef.option3;
 		pe.option4 = pef.option4;
 		pe.option5 = pef.option5;
-
+		
 		Ebean.save(pe);
 		
 		res = doPoll(name);

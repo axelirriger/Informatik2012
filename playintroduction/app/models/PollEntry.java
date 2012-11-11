@@ -3,7 +3,6 @@ package models;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
-import javax.persistence.OneToMany;
 import javax.persistence.OneToOne;
 
 import play.db.ebean.Model;
@@ -27,5 +26,4 @@ public class PollEntry extends Model {
 
 	public static Finder<PollModel, PollEntry> findByName = new Finder<PollModel, PollEntry>(
 			PollModel.class, PollEntry.class);
-
 }

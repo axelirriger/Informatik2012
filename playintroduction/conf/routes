@@ -21,6 +21,7 @@ GET		/component/:name/new				controllers.Component.create(name: String)
 GET		/poll								controllers.PollController.newPoll()
 POST	/poll								controllers.PollController.submit()
 GET		/poll/:name							controllers.PollController.read(name: String)
+GET		/polls								controllers.PollController.showPolls()
 GET		/doPoll/:name						controllers.PollController.doPoll(name: String)
 POST	/doPoll/:name						controllers.PollController.savePoll(name: String)
 
