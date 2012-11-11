@@ -18,11 +18,11 @@
 			@for(pollEntry <- pollEntries) {
 			<tr>
 				<td>@pollEntry.participantName</td>
-				<td>@pollEntry.option1</td>
-				<td>@pollEntry.option2</td>
-				<td>@pollEntry.option3</td>
-				<td>@pollEntry.option4</td>
-				<td>@pollEntry.option5</td>
+				<td>@if(pollEntry.option1){<i class="icon-ok"></i>}else{<i class="icon-remove"></i>}</td>
+				<td>@if(pollEntry.option2){<i class="icon-ok"></i>}else{<i class="icon-remove"></i>}</td>
+				<td>@if(pollEntry.option3){<i class="icon-ok"></i>}else{<i class="icon-remove"></i>}</td>
+				<td>@if(pollEntry.option4){<i class="icon-ok"></i>}else{<i class="icon-remove"></i>}</td>
+				<td>@if(pollEntry.option5){<i class="icon-ok"></i>}else{<i class="icon-remove"></i>}</td>
 			</tr>
 			}
 			<tr>

@@ -18,6 +18,25 @@ import forms.PollForm;
 public class PollController extends Controller {
 
 	private static Form<PollForm> pollForm = form(PollForm.class);
+	
+	public static Result showPolls() {
+		if (Logger.isDebugEnabled()) {
+			Logger.debug("> PollController.showPolls()");
+		}
+
+		final long start = System.currentTimeMillis();
+		final List<PollModel> pms = PollModel.findByName.all();
+		final long end = System.currentTimeMillis();
+
+		if (Logger.isDebugEnabled()) {
+			Logger.debug("PollController.showPolls: Loading in " + (end - start)
+					+ " msec");
+		}
+		
+		Content html = views.html.polls.render(pms);
+		
+		return ok(views.html.pageframe.render("content",html));
+	}
 
 	public static Result newPoll() {
 		if (Logger.isDebugEnabled()) {
