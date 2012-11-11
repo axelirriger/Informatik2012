@@ -1,13 +1,14 @@
 package controllers;
 
+import play.mvc.Content;
 import play.mvc.Controller;
 import play.mvc.Result;
-import views.html.index;
 
 public class Application extends Controller {
 
 	public static Result index() {
-		return ok(index.render("Your new application is ready."));
+		Content html = views.html.index.render("Welcome to myPoll!");
+		return ok(views.html.pageframe.render("content",html));
 	}
 
 }

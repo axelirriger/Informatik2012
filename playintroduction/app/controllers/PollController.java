@@ -91,7 +91,7 @@ public class PollController extends Controller {
 				Logger.debug("PollController.submit: Saving in "
 						+ (end - start) + " msec");
 			}
-			res = ok("Poll created");
+			res = doPoll(pm.name);
 		} else {
 			res = badRequest("Poll already exists");
 		}
@@ -163,7 +163,7 @@ public class PollController extends Controller {
 			Content html = views.html.doPoll.render(pm, entries, form(PollEntryForm.class));
 			
 			
-			res = ok(html);
+			res = ok(views.html.pageframe.render("content",html));
 		} else {
 			res = badRequest("Poll does not exist");
 		}
@@ -192,7 +192,7 @@ public class PollController extends Controller {
 		pe.option3 = pef.option3;
 		pe.option4 = pef.option4;
 		pe.option5 = pef.option5;
-
+		
 		Ebean.save(pe);
 		
 		res = doPoll(name);

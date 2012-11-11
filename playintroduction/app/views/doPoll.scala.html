@@ -1,43 +1,39 @@
 @(pollModel: models.PollModel)(pollEntries: java.util.List[models.PollEntry])(pollForm: Form[forms.PollEntryForm])
 
-<!DOCTYPE html>
-
-<html>
-	<body>
-	
 	<h1>@pollModel.name</h1>
 	
 			@helper.form(action=routes.PollController.savePoll(pollModel.name)) {
-	<table>
-		<th>
-			<td>@pollModel.option1</td>
-			<td>@pollModel.option2</td>
-			<td>@pollModel.option3</td>
-			<td>@pollModel.option4</td>
-			<td>@pollModel.option5</td>
-		</th>
-		@for(pollEntry <- pollEntries) {
-		<tr>
-			<td>@pollEntry.participantName</td>
-			<td>@pollEntry.option1</td>
-			<td>@pollEntry.option2</td>
-			<td>@pollEntry.option3</td>
-			<td>@pollEntry.option4</td>
-			<td>@pollEntry.option5</td>
-		</tr>
-		}
-		<tr>
+	<table class="zebra-striped">
+		<thead>
+			<tr>
+			    <td>User</td>
+				<td>@pollModel.option1</td>
+				<td>@pollModel.option2</td>
+				<td>@pollModel.option3</td>
+				<td>@pollModel.option4</td>
+				<td>@pollModel.option5</td>
+			</tr>
+		</thead>
+		<tbody>
+			@for(pollEntry <- pollEntries) {
+			<tr>
+				<td>@pollEntry.participantName</td>
+				<td>@pollEntry.option1</td>
+				<td>@pollEntry.option2</td>
+				<td>@pollEntry.option3</td>
+				<td>@pollEntry.option4</td>
+				<td>@pollEntry.option5</td>
+			</tr>
+			}
+			<tr>
 				<td>@helper.inputText(pollForm("participant"))</td>
 				<td>@helper.checkbox(pollForm("option1"))</td>
 				<td>@helper.checkbox(pollForm("option2"))</td>
 				<td>@helper.checkbox(pollForm("option3"))</td>
 				<td>@helper.checkbox(pollForm("option4"))</td>
 				<td>@helper.checkbox(pollForm("option5"))</td>
-		</tr>
+			</tr>
+		</tbody>
 	</table>
-	<input type="submit"/>
+	<input class="btn btn-primary" type="submit"/>
 			}
-	
-	
-	</body>
-</html>

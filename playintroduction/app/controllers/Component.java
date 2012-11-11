@@ -17,7 +17,6 @@ import akka.actor.Props;
 import com.avaje.ebean.Ebean;
 
 import forms.ComponentForm;
-import forms.ProductForm;
 
 /**
  * Controller class for components.
