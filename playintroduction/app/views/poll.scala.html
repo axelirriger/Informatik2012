@@ -1,7 +1,4 @@
 @(pollForm: Form[forms.PollForm])
-
-<html>
-	<body>
 		
 		@helper.form(action=routes.PollController.submit()) {
 			@helper.inputText(pollForm("pollName"))
@@ -12,7 +9,4 @@
 			@helper.inputText(pollForm("option4"))
 			@helper.inputText(pollForm("option5"))
 			<input type="submit"/>
-		}
-		
-	</body>
-</html>
+		}		

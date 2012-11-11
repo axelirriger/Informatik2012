@@ -2,17 +2,18 @@ package controllers;
 
 import java.util.List;
 
-import com.avaje.ebean.Ebean;
-
 import models.PollEntry;
 import models.PollModel;
-import forms.PollEntryForm;
-import forms.PollForm;
 import play.Logger;
 import play.data.Form;
 import play.mvc.Content;
 import play.mvc.Controller;
 import play.mvc.Result;
+
+import com.avaje.ebean.Ebean;
+
+import forms.PollEntryForm;
+import forms.PollForm;
 
 public class PollController extends Controller {
 
@@ -32,7 +33,7 @@ public class PollController extends Controller {
 					+ (end - start) + " msec");
 			Logger.debug("< PollController.newPoll()");
 		}
-		return ok(html);
+		return ok(views.html.pageframe.render("content",html));
 	}
 
 	public static Result submit() {
