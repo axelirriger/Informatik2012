@@ -1,0 +1,29 @@
+# Routes
+# This file defines all application routes (Higher priority routes first)
+# ~~~~
+
+# Home page
+GET     /                           		controllers.Application.index()
+
+#GET		/product							controllers.Product.read()
+#POST	/product							controllers.Product.submit()
+#GET		/product/:name/price				controllers.Product.getPrice(name: String)
+#GET		/product/:name/new					controllers.Product.create(name: String)
+#GET		/product/:name/add/:comp/:units		controllers.Product.addComponent(name: String, comp: String, units: java.lang.Integer)
+
+#GET		/component							controllers.Component.read()
+#POST	/component							controllers.Component.submit()
+#GET		/component/:name/price				controllers.Component.getPrice(name: String)	
+#GET		/component/:name/price/:price		controllers.Component.setPrice(name:String, price: String)
+#GET		/component/:name/new				controllers.Component.create(name: String)
+
+
+GET		/poll								controllers.PollController.newPoll()
+POST	/poll								controllers.PollController.submit()
+GET		/poll/:name							controllers.PollController.read(name: String)
+GET		/polls								controllers.PollController.showPolls()
+GET		/doPoll/:name						controllers.PollController.doPoll(name: String)
+POST	/doPoll/:name						controllers.PollController.savePoll(name: String)
+
+# Map static resources from the /public folder to the /assets URL path
+GET     /assets/*file               controllers.Assets.at(path="/public", file)

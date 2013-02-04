@@ -1,0 +1,13 @@
+@(pollForm: Form[forms.PollForm])
+
+<h1>Create your poll!</h1>		
+		@helper.form(action=routes.PollController.submit()) {
+			@helper.inputText(pollForm("pollName"))
+			@helper.textarea(pollForm("pollDescription"))
+			@helper.inputText(pollForm("option1"))
+			@helper.inputText(pollForm("option2"))
+			@helper.inputText(pollForm("option3"))
+			@helper.inputText(pollForm("option4"))
+			@helper.inputText(pollForm("option5"))
+			<input class="btn btn-primary" type="submit"/>
+		}		
