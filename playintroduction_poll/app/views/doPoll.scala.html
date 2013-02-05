@@ -18,6 +18,7 @@
 			@for(pollEntry <- pollEntries) {
 			<tr>
 				<td>@pollEntry.participantName</td>
+				<td></td>
 				<td>@if(pollEntry.option1){<i class="icon-ok"></i>}else{<i class="icon-remove"></i>}</td>
 				<td>@if(pollEntry.option2){<i class="icon-ok"></i>}else{<i class="icon-remove"></i>}</td>
 				<td>@if(pollEntry.option3){<i class="icon-ok"></i>}else{<i class="icon-remove"></i>}</td>
@@ -27,6 +28,7 @@
 			}
 			<tr>
 				<td>@helper.inputText(pollForm("participant"))</td>
+				<td>@helper.inputText(pollForm("email"))</td>
 				<td>@helper.checkbox(pollForm("option1"))</td>
 				<td>@helper.checkbox(pollForm("option2"))</td>
 				<td>@helper.checkbox(pollForm("option3"))</td>

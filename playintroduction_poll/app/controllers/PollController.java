@@ -6,9 +6,15 @@ import models.PollEntry;
 import models.PollModel;
 import play.Logger;
 import play.data.Form;
+import play.libs.Akka;
 import play.mvc.Content;
 import play.mvc.Controller;
 import play.mvc.Result;
+import actors.PollActor;
+import actors.messages.PollMessage;
+import akka.actor.ActorRef;
+import akka.actor.EmptyLocalActorRef;
+import akka.actor.Props;
 
 import com.avaje.ebean.Ebean;
 
@@ -16,7 +22,7 @@ import forms.PollEntryForm;
 import forms.PollForm;
 
 public class PollController extends Controller {
-
+	private static final String AKKA_POLL_LOOKUP_PREFIX = "/user/";
 	private static Form<PollForm> pollForm = form(PollForm.class);
 	//mmmmm
 	public static Result showPolls() {
@@ -73,6 +79,8 @@ public class PollController extends Controller {
 			Logger.trace("Option 5: '" + form.option5 + "'");
 		}
 
+		createPollActor(form.pollName);
+		
 		if (PollModel.findByName.byId(form.pollName) == null) {
 
 			final PollModel pm = new PollModel();
@@ -212,6 +220,9 @@ public class PollController extends Controller {
 		pe.option4 = pef.option4;
 		pe.option5 = pef.option5;
 		
+		//
+		sendMessageToActor(name, pef.email);
+		
 		Ebean.save(pe);
 		
 		res = doPoll(name);
@@ -220,5 +231,20 @@ public class PollController extends Controller {
 			Logger.debug("< PollController.savePoll()");
 		}
 		return res;
+	}
+
+	private static void createPollActor(String name) {
+		Props props = new Props(PollActor.class);
+		Akka.system().actorOf(props, name);
+	}
+	
+	private static void sendMessageToActor(String pollName, String email) {
+		ActorRef ref = Akka.system().actorFor(AKKA_POLL_LOOKUP_PREFIX + pollName);
+		if(!(ref instanceof EmptyLocalActorRef)){
+			PollMessage pollMessage = new PollMessage();
+			pollMessage.emailAddress = email;
+			pollMessage.pollName = pollName;
+			ref.tell(pollMessage);
+		}
 	}
 }
