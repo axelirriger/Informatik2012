@@ -1,0 +1,41 @@
+@(pollModel: models.PollModel)(pollEntries: java.util.List[models.PollEntry])(pollForm: Form[forms.PollEntryForm])
+
+	<h1>@pollModel.name</h1>
+	
+			@helper.form(action=routes.PollController.savePoll(pollModel.name)) {
+	<table class="zebra-striped">
+		<thead>
+			<tr>
+			    <td>User</td>
+				<td>@pollModel.option1</td>
+				<td>@pollModel.option2</td>
+				<td>@pollModel.option3</td>
+				<td>@pollModel.option4</td>
+				<td>@pollModel.option5</td>
+			</tr>
+		</thead>
+		<tbody>
+			@for(pollEntry <- pollEntries) {
+			<tr>
+				<td>@pollEntry.participantName</td>
+				<td></td>
+				<td>@if(pollEntry.option1){<i class="icon-ok"></i>}else{<i class="icon-remove"></i>}</td>
+				<td>@if(pollEntry.option2){<i class="icon-ok"></i>}else{<i class="icon-remove"></i>}</td>
+				<td>@if(pollEntry.option3){<i class="icon-ok"></i>}else{<i class="icon-remove"></i>}</td>
+				<td>@if(pollEntry.option4){<i class="icon-ok"></i>}else{<i class="icon-remove"></i>}</td>
+				<td>@if(pollEntry.option5){<i class="icon-ok"></i>}else{<i class="icon-remove"></i>}</td>
+			</tr>
+			}
+			<tr>
+				<td>@helper.inputText(pollForm("participant"))</td>
+				<td>@helper.inputText(pollForm("email"))</td>
+				<td>@helper.checkbox(pollForm("option1"))</td>
+				<td>@helper.checkbox(pollForm("option2"))</td>
+				<td>@helper.checkbox(pollForm("option3"))</td>
+				<td>@helper.checkbox(pollForm("option4"))</td>
+				<td>@helper.checkbox(pollForm("option5"))</td>
+			</tr>
+		</tbody>
+	</table>
+	<input class="btn btn-primary" type="submit"/>
+			}
