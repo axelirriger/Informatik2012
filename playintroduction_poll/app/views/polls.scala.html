@@ -1,0 +1,9 @@
+@(pollModels: java.util.List[models.PollModel])
+
+	<h1>Existing Polls</h1>
+
+	<ul>
+		@for(pollModel <- pollModels) {
+		<li><a href="/doPoll/@pollModel.name">@pollModel.name</a></li>
+		}
+	</ul>
