@@ -1,5 +1,7 @@
 package actors;
 
+import java.util.List;
+
 import org.apache.commons.mail.DefaultAuthenticator;
 import org.apache.commons.mail.Email;
 import org.apache.commons.mail.EmailException;
@@ -15,16 +17,22 @@ public class EmailVersandActor extends UntypedActor {
 	@Override
 	public void onReceive(Object message) throws Exception {
 		if(message instanceof EmailsMessage){
-			for(PollMessage pollMsg : ((EmailsMessage) message).emailsList){
-				sendMessage(pollMsg);
-			}
+			sendMessageToAll(((EmailsMessage) message).emailsList);
 		}else{
 			unhandled(message);
 		}
 	}
 
+	private void sendMessageToAll(List<PollMessage> emailsList) {
+		for(PollMessage pollMsg : emailsList){
+			sendMessage(pollMsg);
+		}
+	}
+
 	private void sendMessage(PollMessage pollMsg) {
-		Logger.debug(" Send mail to: " + pollMsg.emailAddress);
+		if(Logger.isDebugEnabled()){
+			Logger.debug(" Send mail to: " + pollMsg.emailAddress);
+		}
 		try{
 			Email email = new SimpleEmail();
 			email.setHostName("smtp.gmail.com");
@@ -37,7 +45,9 @@ public class EmailVersandActor extends UntypedActor {
 			email.addTo("alexandruvladut@gmail.com");
 			email.send();
 		}catch(EmailException e){
-			Logger.debug("Mail cannot be sent!");
+			if(Logger.isDebugEnabled()){
+				Logger.debug("Mail cannot be sent!");
+			}
 		}
 	}
 }
