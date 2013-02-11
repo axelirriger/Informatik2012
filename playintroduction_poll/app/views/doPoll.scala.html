@@ -1,29 +1,30 @@
-@(pollModel: models.PollModel)(pollEntries: java.util.List[models.PollEntry])(pollForm: Form[forms.PollEntryForm])
+@(pollModel: models.PollMongoEntity)(pollEntries: java.util.List[models.PollMongoResultEntity])(pollForm: Form[forms.PollEntryForm])
 
-	<h1>@pollModel.name</h1>
+	<h1>@pollModel.pollName</h1>
 	
-			@helper.form(action=routes.PollController.savePoll(pollModel.name)) {
+			@helper.form(action=routes.PollController.savePoll(pollModel.pollName)) {
 	<table class="zebra-striped">
 		<thead>
 			<tr>
 			    <td>User</td>
-				<td>@pollModel.option1</td>
-				<td>@pollModel.option2</td>
-				<td>@pollModel.option3</td>
-				<td>@pollModel.option4</td>
-				<td>@pollModel.option5</td>
+			    <td>Email</td>
+				<td>@pollModel.optionName1</td>
+				<td>@pollModel.optionName2</td>
+				<td>@pollModel.optionName3</td>
+				<td>@pollModel.optionName4</td>
+				<td>@pollModel.optionName5</td>
 			</tr>
 		</thead>
 		<tbody>
 			@for(pollEntry <- pollEntries) {
 			<tr>
 				<td>@pollEntry.participantName</td>
-				<td></td>
-				<td>@if(pollEntry.option1){<i class="icon-ok"></i>}else{<i class="icon-remove"></i>}</td>
-				<td>@if(pollEntry.option2){<i class="icon-ok"></i>}else{<i class="icon-remove"></i>}</td>
-				<td>@if(pollEntry.option3){<i class="icon-ok"></i>}else{<i class="icon-remove"></i>}</td>
-				<td>@if(pollEntry.option4){<i class="icon-ok"></i>}else{<i class="icon-remove"></i>}</td>
-				<td>@if(pollEntry.option5){<i class="icon-ok"></i>}else{<i class="icon-remove"></i>}</td>
+				<td>@pollEntry.email</td>
+				<td>@if(pollEntry.optionValue1){<i class="icon-ok"></i>}else{<i class="icon-remove"></i>}</td>
+				<td>@if(pollEntry.optionValue2){<i class="icon-ok"></i>}else{<i class="icon-remove"></i>}</td>
+				<td>@if(pollEntry.optionValue3){<i class="icon-ok"></i>}else{<i class="icon-remove"></i>}</td>
+				<td>@if(pollEntry.optionValue4){<i class="icon-ok"></i>}else{<i class="icon-remove"></i>}</td>
+				<td>@if(pollEntry.optionValue5){<i class="icon-ok"></i>}else{<i class="icon-remove"></i>}</td>
 			</tr>
 			}
 			<tr>
