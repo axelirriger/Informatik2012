@@ -1,5 +1,5 @@
 @(pollModel: models.PollMongoEntity)(pollEntries: java.util.List[models.PollMongoResultEntity])(pollForm: Form[forms.PollEntryForm])
-
+@import helper._;
 	<h1>@pollModel.pollName</h1>
 	
 			@helper.form(action=routes.PollController.savePoll(pollModel.pollName)) {
@@ -8,11 +8,9 @@
 			<tr>
 			    <td>User</td>
 			    <td>Email</td>
-				<td>@pollModel.optionName1</td>
-				<td>@pollModel.optionName2</td>
-				<td>@pollModel.optionName3</td>
-				<td>@pollModel.optionName4</td>
-				<td>@pollModel.optionName5</td>
+			    @for(optionName <- pollModel.optionsName){
+			    	<td>@optionName</td>
+			    }
 			</tr>
 		</thead>
 		<tbody>
@@ -20,21 +18,18 @@
 			<tr>
 				<td>@pollEntry.participantName</td>
 				<td>@pollEntry.email</td>
-				<td>@if(pollEntry.optionValue1){<i class="icon-ok"></i>}else{<i class="icon-remove"></i>}</td>
-				<td>@if(pollEntry.optionValue2){<i class="icon-ok"></i>}else{<i class="icon-remove"></i>}</td>
-				<td>@if(pollEntry.optionValue3){<i class="icon-ok"></i>}else{<i class="icon-remove"></i>}</td>
-				<td>@if(pollEntry.optionValue4){<i class="icon-ok"></i>}else{<i class="icon-remove"></i>}</td>
-				<td>@if(pollEntry.optionValue5){<i class="icon-ok"></i>}else{<i class="icon-remove"></i>}</td>
+				@for(optionValue <- pollEntry.optionValues){
+					<td>@if(optionValue){<i class="icon-ok"></i>}else{<i class="icon-remove"></i>}</td>
+				}
 			</tr>
 			}
 			<tr>
 				<td>@helper.inputText(pollForm("participant"))</td>
 				<td>@helper.inputText(pollForm("email"))</td>
-				<td>@helper.checkbox(pollForm("option1"))</td>
-				<td>@helper.checkbox(pollForm("option2"))</td>
-				<td>@helper.checkbox(pollForm("option3"))</td>
-				<td>@helper.checkbox(pollForm("option4"))</td>
-				<td>@helper.checkbox(pollForm("option5"))</td>
+				@repeat(pollForm("optionValues"), min={pollModel.optionsName.size()}){ optionValueField =>
+					
+					<td>@helper.checkbox(optionValueField, '_label -> Messages(""), 'checked -> "unchecked")</td>
+				}
 			</tr>
 		</tbody>
 	</table>

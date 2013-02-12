@@ -4,7 +4,6 @@ import java.net.UnknownHostException;
 
 import models.PollMongoEntity;
 import models.PollMongoResultEntity;
-
 import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
@@ -12,140 +11,209 @@ import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
-
 import java.util.ArrayList;
 import java.util.List;
 
-public class PollMongoBL{
+import play.Logger;
 
-private static DBCollection collection;
+public class PollMongoBL {
 
-public static DBCollection getCollection(){
-	if(collection == null){
-		try {
-			MongoClient mongoClient = new MongoClient("localhost", 27017);
-			DB db = mongoClient.getDB("playDb");
-			collection = db.getCollection("polls");
-		} catch (UnknownHostException e) {
-			e.printStackTrace();
+	private static DBCollection collection;
+
+	public static DBCollection getCollection() {
+		if (collection == null) {
+			try {
+				MongoClient mongoClient = new MongoClient("localhost", 27017);
+				DB db = mongoClient.getDB("playDb");
+				collection = db.getCollection("polls");
+			} catch (UnknownHostException e) {
+				e.printStackTrace();
+			}
 		}
+		return collection;
 	}
-	return collection;
-}
 
-public static List<PollMongoEntity> getAllPolls(){
+	public static List<PollMongoEntity> getAllPolls() {
+		if (Logger.isDebugEnabled()) {
+			Logger.debug("> PollMongoBL.getAllPolls()");
+		}
 		DBCursor cursor = getCollection().find();
 		List<PollMongoEntity> allPolls = new ArrayList<PollMongoEntity>();
-		try {
-			   while(cursor.hasNext()) {
-			       DBObject object = cursor.next();
-			       allPolls.add(buildPollEntity(object));
-			   }
-			} finally {
-			   cursor.close();
+		while (cursor.hasNext()) {
+			DBObject object = cursor.next();
+			allPolls.add(buildPollEntity(object));
+		}
+		cursor.close();
+		if(Logger.isTraceEnabled()){
+			Logger.trace(" Loaded " + allPolls.size() + " Polls");
+		}
+		return allPolls;
+	}
+
+	public static void savePoll(PollMongoEntity pollEntity) {
+		if (Logger.isDebugEnabled()) {
+			Logger.debug("> PollMongoBL.savePoll()");
+		}
+		if (Logger.isTraceEnabled()) {
+			Logger.trace(" Poll saved:");
+			Logger.trace(" Poll Name: " + pollEntity.pollName);
+			Logger.trace(" Poll Description: " + pollEntity.pollDescription);
+		}
+		BasicDBObject toSave = buildDBObjectFromEntity(pollEntity);
+		getCollection().insert(toSave);
+	}
+
+	public static PollMongoEntity loadPoll(String pollName) {
+		if (Logger.isDebugEnabled()) {
+			Logger.debug("> PollMongoBL.loadPoll()");
+		}
+		BasicDBObject object = new BasicDBObject();
+		object.put("name", pollName);
+		long start = System.currentTimeMillis();
+		DBCursor cursor = getCollection().find(object);
+		long end = System.currentTimeMillis();
+		PollMongoEntity entity = null;
+		if (cursor.hasNext()) {
+			entity = buildPollEntity(cursor.next());
+		}
+		cursor.close();
+		if (Logger.isDebugEnabled()) {
+			Logger.debug("Poll with name '" + pollName + "' loaded in "
+					+ (end - start) + "ms");
+		}
+		if (Logger.isTraceEnabled()) {
+			Logger.trace("Loaded Poll:");
+			Logger.trace(" Poll Name: " + entity.pollName);
+			Logger.trace(" Poll Description: " + entity.pollDescription);
+			Logger.trace("Poll Options:");
+			if (entity.optionsName != null && entity.optionsName.size() > 0) {
+				for (int i = 0; i < entity.optionsName.size(); i++) {
+					Logger.trace(" Option[" + i + "]: "
+							+ entity.optionsName.get(i));
+				}
+			} else {
+				Logger.trace("No option for this poll...");
 			}
-
-	return allPolls;
-}
-
-public static void savePoll(PollMongoEntity pollEntity){
-	BasicDBObject toSave = buildDBObjectFromEntity(pollEntity);
-	getCollection().insert(toSave);
-}
-
-public static PollMongoEntity loadPoll(String pollName){
-	BasicDBObject object = new BasicDBObject();
-	object.put("name", pollName);
-	DBCursor cursor = getCollection().find(object);
-	PollMongoEntity entity = null;
-	if(cursor.hasNext()){
-		entity = buildPollEntity(cursor.next());
+			if (entity.results != null && entity.results.size() > 0) {
+				Logger.trace(" Number of Entries: " + entity.results.size());
+			}
+		}
+		return entity;
 	}
-	cursor.close();
-	return entity;
-}
 
-public static void addEntryToPoll(String pollName, PollMongoResultEntity entryEntity){
-	BasicDBObject query = new BasicDBObject();
-	query.put("name", pollName);
-	DBCursor cursor = getCollection().find(query);
-	if(cursor.hasNext()){
-		BasicDBObject object = (BasicDBObject) cursor.next();
-		BasicDBList resultsList = (BasicDBList) object.get("results");
-		BasicDBObject entryToSave = buildEntryFromEntity(entryEntity);
-		resultsList.add(entryToSave);
-		getCollection().update(query, object);
+	public static void addEntryToPoll(String pollName,
+			PollMongoResultEntity entryEntity) {
+		if (Logger.isDebugEnabled()) {
+			Logger.debug("> PollMongoBL.addEntryToPoll(String, PollMongoResultEntity)");
+		}
+		BasicDBObject query = new BasicDBObject();
+		query.put("name", pollName);
+		DBCursor cursor = getCollection().find(query);
+		if (cursor.hasNext()) {
+			BasicDBObject object = (BasicDBObject) cursor.next();
+			addMissingFalseValues(entryEntity, object);
+			BasicDBList resultsList = (BasicDBList) object.get("results");
+			BasicDBObject entryToSave = buildEntryFromEntity(entryEntity);
+			resultsList.add(entryToSave);
+			getCollection().update(query, object);
+		}
+		cursor.close();
+		if (Logger.isTraceEnabled()) {
+			Logger.trace(" New Entry added to Poll with Name " + pollName);
+			Logger.trace(" Entry Values:");
+			Logger.trace(" Added By: " + entryEntity.participantName);
+			Logger.trace(" Participant email: " + entryEntity.email);
+		}
 	}
-	cursor.close();
-}
 
-private static BasicDBObject buildEntryFromEntity(
-		PollMongoResultEntity resultEntity) {
-	BasicDBObject element = new BasicDBObject();
+	private static void addMissingFalseValues(
+			PollMongoResultEntity entryEntity, BasicDBObject object) {
+		BasicDBList optionNList = (BasicDBList) object.get("optionNames");
+		if (entryEntity.optionValues != null
+				&& entryEntity.optionValues.size() > 0) {
+			for (int i = 0; i < entryEntity.optionValues.size(); i++) {
+				if (entryEntity.optionValues.get(i) == null) {
+					entryEntity.optionValues.set(i, Boolean.FALSE);
+				}
+			}
+		}
+		if (optionNList != null && optionNList.size() > 0
+				&& optionNList.size() > entryEntity.optionValues.size()) {
+			int sizeDifference = optionNList.size()
+					- entryEntity.optionValues.size();
+			for (int i = 0; i < sizeDifference; i++) {
+				entryEntity.optionValues.add(Boolean.FALSE);
+			}
+		}
+	}
+
+	private static BasicDBObject buildEntryFromEntity(
+			PollMongoResultEntity resultEntity) {
+		BasicDBObject element = new BasicDBObject();
 		element.put("name", resultEntity.participantName);
 		element.put("email", resultEntity.email);
-		element.put("optionValue1",resultEntity.optionValue1);
-		element.put("optionValue2",resultEntity.optionValue2);
-		element.put("optionValue3",resultEntity.optionValue3);
-		element.put("optionValue4",resultEntity.optionValue4);
-		element.put("optionValue5",resultEntity.optionValue5);
-	return element;
-}
-
-private static PollMongoEntity buildPollEntity(DBObject object) {
-	PollMongoEntity entity = new PollMongoEntity();
-	entity.pollName = (String) object.get("name");
-	entity.pollDescription = (String) object.get("beschreibung");
-	entity.optionName1 = (String) object.get("optionName1");
-	entity.optionName2 = (String) object.get("optionName2");
-	entity.optionName3 = (String) object.get("optionName3");
-	entity.optionName4 = (String) object.get("optionName4");
-	entity.optionName5 = (String) object.get("optionName5");
-	BasicDBList results = (BasicDBList)object.get("results");
-	List<PollMongoResultEntity> resultEntities = new ArrayList<PollMongoResultEntity>();
-	if(results != null){
-		for(Object res: results){
-			if(res instanceof DBObject){
-				DBObject dbRes = (DBObject) res;
-				PollMongoResultEntity resultEntity = new PollMongoResultEntity();
-				resultEntity.participantName = (String) dbRes.get("name");
-				resultEntity.email = (String) dbRes.get("email");
-				resultEntity.optionValue1 = (Boolean) dbRes.get("optionValue1");
-				resultEntity.optionValue2 = (Boolean) dbRes.get("optionValue2");
-				resultEntity.optionValue3 = (Boolean) dbRes.get("optionValue3");
-				resultEntity.optionValue4 = (Boolean) dbRes.get("optionValue4");
-				resultEntity.optionValue5 = (Boolean) dbRes.get("optionValue5");
-				resultEntities.add(resultEntity);
+		BasicDBList optionsList = new BasicDBList();
+		if (resultEntity.optionValues != null
+				&& resultEntity.optionValues.size() > 0) {
+			for (int i = 0; i < resultEntity.optionValues.size(); i++) {
+				optionsList.add(resultEntity.optionValues.get(i));
 			}
 		}
+		element.put("optionValues", optionsList);
+		return element;
 	}
-	entity.results = resultEntities;
-	return entity;
-}
 
-private static BasicDBObject buildDBObjectFromEntity(PollMongoEntity pollEntity){
-	BasicDBObject object = new BasicDBObject();
+	private static PollMongoEntity buildPollEntity(DBObject object) {
+		PollMongoEntity entity = new PollMongoEntity();
+		entity.pollName = (String) object.get("name");
+		entity.pollDescription = (String) object.get("beschreibung");
+		BasicDBList optionNamesList = (BasicDBList) object.get("optionNames");
+		if (optionNamesList != null && optionNamesList.size() > 0) {
+			for (int i = 0; i < optionNamesList.size(); i++) {
+				entity.optionsName.add((String) optionNamesList.get(i));
+			}
+		}
+		BasicDBList results = (BasicDBList) object.get("results");
+		List<PollMongoResultEntity> resultEntities = new ArrayList<PollMongoResultEntity>();
+		if (results != null) {
+			for (Object res : results) {
+				if (res instanceof DBObject) {
+					DBObject dbRes = (DBObject) res;
+					PollMongoResultEntity resultEntity = new PollMongoResultEntity();
+					resultEntity.participantName = (String) dbRes.get("name");
+					resultEntity.email = (String) dbRes.get("email");
+					BasicDBList optionsList = (BasicDBList) dbRes
+							.get("optionValues");
+					if (optionsList != null && optionsList.size() > 0) {
+						for (int i = 0; i < optionsList.size(); i++) {
+							resultEntity.optionValues.add((Boolean) optionsList
+									.get(i));
+						}
+					}
+					resultEntities.add(resultEntity);
+				}
+			}
+		}
+		entity.results = resultEntities;
+		return entity;
+	}
+
+	private static BasicDBObject buildDBObjectFromEntity(
+			PollMongoEntity pollEntity) {
+		BasicDBObject object = new BasicDBObject();
 		object.put("name", pollEntity.pollName);
 		object.put("beschreibung", pollEntity.pollDescription);
-		object.put("optionName1", pollEntity.optionName1);
-		object.put("optionName2", pollEntity.optionName2);
-		object.put("optionName3", pollEntity.optionName3);
-		object.put("optionName4", pollEntity.optionName4);
-		object.put("optionName5", pollEntity.optionName5);
+		BasicDBList optionsList = new BasicDBList();
+		for (String option : pollEntity.optionsName) {
+			optionsList.add(option);
+		}
+		object.put("optionNames", optionsList);
 		BasicDBList resultsList = new BasicDBList();
-		for(PollMongoResultEntity resultEntity: pollEntity.results){
-			BasicDBObject element = new BasicDBObject();
-			element.put("name", resultEntity.participantName);
-			element.put("email", resultEntity.email);
-			element.put("optionValue1",resultEntity.optionValue1);
-			element.put("optionValue2",resultEntity.optionValue2);
-			element.put("optionValue3",resultEntity.optionValue3);
-			element.put("optionValue4",resultEntity.optionValue4);
-			element.put("optionValue5",resultEntity.optionValue5);
+		for (PollMongoResultEntity resultEntity : pollEntity.results) {
+			BasicDBObject element = buildEntryFromEntity(resultEntity);
+			resultsList.add(element);
 		}
 		object.put("results", resultsList);
-	return object;
-}
-
-//db.polls.save({_id:1, name:"poll1",beschreibung:"Ein Poll",optionName1:"O1", optionName2:"O2", optionName3:"O3", optionName4:"O4", optionName5:"O5", results:[{name:"John",email:"john@emm.com",optionValue1:true,optionValue2:false,optionValue3:true,optionValue4:false,optionValue5:false}, {name:"Mike",email:"mike@emm.com",optionValue1:true, optionValue2:true, optionValue3:true, optionValue4:false, optionValue5:true}]})
+		return object;
+	}
 }

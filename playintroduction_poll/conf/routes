@@ -12,6 +12,7 @@ GET		/polls								controllers.PollController.showPolls()
 GET		/doPoll/:name						controllers.PollController.doPoll(name: String)
 POST	/doPoll/:name						controllers.PollController.savePoll(name: String)
 
+
 GET		/userRegister						controllers.UserController.startUserRegister()
 POST	/userRegister						controllers.UserController.registerUser()
 GET		/login								controllers.UserController.startLogin()

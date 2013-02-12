@@ -14,8 +14,8 @@ public class PollMongoEntity extends Model{
 	public Long _id;
 	public String pollName;
 	public String pollDescription;
-	public String optionName1, optionName2, optionName3, optionName4, optionName5;
-	
+//	public String optionName1, optionName2, optionName3, optionName4, optionName5;
+	public List<String> optionsName = new ArrayList<String>();
 	public List<PollMongoResultEntity> results = new ArrayList<PollMongoResultEntity>();
 	
 }
