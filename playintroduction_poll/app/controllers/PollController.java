@@ -22,25 +22,29 @@ import forms.PollForm;
 
 public class PollController extends Controller {
 	private static final String AKKA_POLL_LOOKUP_PREFIX = "/user/";
-	private static Form<PollForm> pollForm = form(PollForm.class);
+	private static final Form<PollForm> pollForm = form(PollForm.class);
 
 	public static Result showPolls() {
 		if (Logger.isDebugEnabled()) {
 			Logger.debug("> PollController.showPolls()");
 		}
 
-		final long start = System.currentTimeMillis();
+		long start = System.currentTimeMillis();
 		final List<PollMongoEntity> polls = PollMongoBL.getAllPolls();
-		final long end = System.currentTimeMillis();
+		long end = System.currentTimeMillis();
 
 		if (Logger.isDebugEnabled()) {
 			Logger.debug("PollController.showPolls: Loading in "
 					+ (end - start) + " msec");
 		}
 
-		Content html = views.html.polls.render(polls);
-
-		return ok(views.html.pageframe.render("content", html));
+		final Content html = views.html.polls.render(polls);
+		final Result result = ok(views.html.pageframe.render("content", html));
+		
+		if (Logger.isDebugEnabled()) {
+			Logger.debug("< PollController.showPolls()");
+		}
+		return result;
 	}
 
 	public static Result newPoll() {
@@ -48,16 +52,21 @@ public class PollController extends Controller {
 			Logger.debug("> PollController.newPoll()");
 		}
 
-		final long start = System.currentTimeMillis();
-		Content html = views.html.poll.render(pollForm);
-		final long end = System.currentTimeMillis();
+		long start = System.currentTimeMillis();
+		final Content html = views.html.poll.render(pollForm);
+		long end = System.currentTimeMillis();
 
 		if (Logger.isDebugEnabled()) {
 			Logger.debug("PollController.newPoll: Rendering in "
 					+ (end - start) + " msec");
+		}
+
+		final Result result = ok(views.html.pageframe.render("content", html));
+		
+		if (Logger.isDebugEnabled()) {
 			Logger.debug("< PollController.newPoll()");
 		}
-		return ok(views.html.pageframe.render("content", html));
+		return result;
 	}
 
 	public static Result submit() {
@@ -79,6 +88,10 @@ public class PollController extends Controller {
 	}
 
 	private static Result submitPoll() {
+		if (Logger.isDebugEnabled()) {
+			Logger.debug("> PollController.submitPoll()");
+		}
+		
 		Result res = null;
 
 		final PollForm form = pollForm.bindFromRequest().get();
@@ -118,7 +131,7 @@ public class PollController extends Controller {
 		}
 
 		if (Logger.isDebugEnabled()) {
-			Logger.debug("< PollController.submit()");
+			Logger.debug("< PollController.submitPoll()");
 		}
 		return res;
 	}
@@ -127,6 +140,7 @@ public class PollController extends Controller {
 		if (Logger.isDebugEnabled()) {
 			Logger.debug("PollController.deleteOption() with index " + index);
 		}
+		
 		final PollForm form = pollForm.bindFromRequest().get();
 		form.optionsName.remove(index);
 		final Form<PollForm> newPollForm = pollForm.fill(form);
@@ -137,12 +151,18 @@ public class PollController extends Controller {
 			Logger.debug("PollController.submit: Delete option in "
 					+ (end - start) + " msec");
 		}
-		return ok(views.html.pageframe.render("content", html));
+		
+		final Result result = ok(views.html.pageframe.render("content", html));
+
+		if (Logger.isDebugEnabled()) {
+			Logger.debug("PollController.deleteOption() with index " + index);
+		}
+		return result;
 	}
 
 	private static Result addNewOption() {
 		if (Logger.isDebugEnabled()) {
-			Logger.debug("PollController.addNewOption()");
+			Logger.debug("> PollController.addNewOption()");
 		}
 		final PollForm form = pollForm.bindFromRequest().get();
 		form.optionsName.add("");
@@ -154,7 +174,13 @@ public class PollController extends Controller {
 			Logger.debug("PollController.submit: Add new Option in "
 					+ (end - start) + " msec");
 		}
-		return ok(views.html.pageframe.render("content", html));
+
+		final Result result =ok(views.html.pageframe.render("content", html));
+		
+		if (Logger.isDebugEnabled()) {
+			Logger.debug("< PollController.addNewOption()");
+		}
+		return result; 
 	}
 
 	public static Result read(final String pollName) {
@@ -226,7 +252,7 @@ public class PollController extends Controller {
 
 	public static Result savePoll(String name) {
 		if (Logger.isDebugEnabled()) {
-			Logger.debug("> PollController.savePoll()");
+			Logger.debug("> PollController.savePoll(String)");
 		}
 
 		Result res = null;
@@ -251,7 +277,7 @@ public class PollController extends Controller {
 		res = doPoll(name);
 
 		if (Logger.isDebugEnabled()) {
-			Logger.debug("< PollController.savePoll()");
+			Logger.debug("< PollController.savePoll(String)");
 		}
 		return res;
 	}
