@@ -38,97 +38,125 @@ public class PollMongoBL {
 		if (Logger.isDebugEnabled()) {
 			Logger.debug("> PollMongoBL.getAllPolls()");
 		}
-		DBCursor cursor = getCollection().find();
-		List<PollMongoEntity> allPolls = new ArrayList<PollMongoEntity>();
+		
+		final DBCursor cursor = getCollection().find();
+		final List<PollMongoEntity> allPolls = new ArrayList<PollMongoEntity>();
 		while (cursor.hasNext()) {
-			DBObject object = cursor.next();
+			final DBObject object = cursor.next();
 			allPolls.add(buildPollEntity(object));
 		}
 		cursor.close();
+		
 		if (Logger.isTraceEnabled()) {
 			Logger.trace(" Loaded " + allPolls.size() + " Polls");
+		}
+		
+		if(Logger.isDebugEnabled()) {
+			Logger.debug("< PollMongoBL.getAllPolls()");
 		}
 		return allPolls;
 	}
 
-	public void savePoll(PollMongoEntity pollEntity) {
+	public void savePoll(final PollMongoEntity pollEntity) {
 		if (Logger.isDebugEnabled()) {
-			Logger.debug("> PollMongoBL.savePoll()");
+			Logger.debug("> PollMongoBL.savePoll(PollMongoEntity)");
 		}
+		
+		final DBObject toSave = buildDBObjectFromEntity(pollEntity);
+		getCollection().insert(toSave);
+
 		if (Logger.isTraceEnabled()) {
 			Logger.trace(" Poll saved:");
 			Logger.trace(" Poll Name: " + pollEntity.pollName);
 			Logger.trace(" Poll Description: " + pollEntity.pollDescription);
 		}
-		BasicDBObject toSave = buildDBObjectFromEntity(pollEntity);
-		getCollection().insert(toSave);
+
+		if (Logger.isDebugEnabled()) {
+			Logger.debug("< PollMongoBL.savePoll(PollMongoEntity)");
+		}
 	}
 
-	public PollMongoEntity loadPoll(String pollName) {
+	public PollMongoEntity loadPoll(final String pollName) {
 		if (Logger.isDebugEnabled()) {
-			Logger.debug("> PollMongoBL.loadPoll()");
+			Logger.debug("> PollMongoBL.loadPoll(String)");
 		}
-		BasicDBObject object = new BasicDBObject();
+		
+		DBObject object = new BasicDBObject();
 		object.put("name", pollName);
+		
 		long start = System.currentTimeMillis();
-		DBCursor cursor = getCollection().find(object);
+		DBObject cursor = getCollection().findOne(object);
 		long end = System.currentTimeMillis();
+		
 		PollMongoEntity entity = null;
-		if (cursor.hasNext()) {
-			entity = buildPollEntity(cursor.next());
+		if (cursor != null) {
+			entity = buildPollEntity(cursor);
 		}
-		cursor.close();
+		
 		if (Logger.isDebugEnabled()) {
 			Logger.debug("Poll with name '" + pollName + "' loaded in "
 					+ (end - start) + "ms");
-		}
-		if (Logger.isTraceEnabled()) {
-			Logger.trace("Loaded Poll:");
-			Logger.trace(" Poll Name: " + entity.pollName);
-			Logger.trace(" Poll Description: " + entity.pollDescription);
-			Logger.trace("Poll Options:");
-			if (entity.optionsName != null && entity.optionsName.size() > 0) {
-				for (int i = 0; i < entity.optionsName.size(); i++) {
-					Logger.trace(" Option[" + i + "]: "
-							+ entity.optionsName.get(i));
+			if (Logger.isTraceEnabled()) {
+				Logger.trace("Loaded Poll:");
+				Logger.trace(" Poll Name: " + entity.pollName);
+				Logger.trace(" Poll Description: " + entity.pollDescription);
+				Logger.trace("Poll Options:");
+				if (entity.optionsName != null && entity.optionsName.size() > 0) {
+					for (int i = 0; i < entity.optionsName.size(); i++) {
+						Logger.trace(" Option[" + i + "]: "
+								+ entity.optionsName.get(i));
+					}
+				} else {
+					Logger.trace("No option for this poll...");
 				}
-			} else {
-				Logger.trace("No option for this poll...");
+				if (entity.results != null && entity.results.size() > 0) {
+					Logger.trace(" Number of Entries: " + entity.results.size());
+				}
 			}
-			if (entity.results != null && entity.results.size() > 0) {
-				Logger.trace(" Number of Entries: " + entity.results.size());
-			}
+		}
+		
+		if (Logger.isDebugEnabled()) {
+			Logger.debug("< PollMongoBL.loadPoll(String)");
 		}
 		return entity;
 	}
 
-	public void addEntryToPoll(String pollName,
-			PollMongoResultEntity entryEntity) {
+	public void addEntryToPoll(final String pollName,
+			final PollMongoResultEntity entryEntity) {
 		if (Logger.isDebugEnabled()) {
 			Logger.debug("> PollMongoBL.addEntryToPoll(String, PollMongoResultEntity)");
 		}
-		BasicDBObject query = new BasicDBObject();
+
+		final DBObject query = new BasicDBObject();
 		query.put("name", pollName);
-		DBCursor cursor = getCollection().find(query);
-		if (cursor.hasNext()) {
-			BasicDBObject object = (BasicDBObject) cursor.next();
+		final DBObject cursor = getCollection().findOne(query);
+		if (cursor != null) {
+			BasicDBObject object = (BasicDBObject) cursor;
 			addMissingFalseValues(entryEntity, object);
 			BasicDBList resultsList = (BasicDBList) object.get("results");
 			BasicDBObject entryToSave = buildEntryFromEntity(entryEntity);
 			resultsList.add(entryToSave);
 			getCollection().update(query, object);
+
+			if (Logger.isTraceEnabled()) {
+				Logger.trace(" New Entry added to Poll with Name " + pollName);
+				Logger.trace(" Entry Values:");
+				Logger.trace(" Added By: " + entryEntity.participantName);
+				Logger.trace(" Participant email: " + entryEntity.email);
+			}
 		}
-		cursor.close();
-		if (Logger.isTraceEnabled()) {
-			Logger.trace(" New Entry added to Poll with Name " + pollName);
-			Logger.trace(" Entry Values:");
-			Logger.trace(" Added By: " + entryEntity.participantName);
-			Logger.trace(" Participant email: " + entryEntity.email);
+
+		if (Logger.isDebugEnabled()) {
+			Logger.debug("< PollMongoBL.addEntryToPoll(String, PollMongoResultEntity)");
 		}
 	}
 
 	private void addMissingFalseValues(PollMongoResultEntity entryEntity,
 			BasicDBObject object) {
+		if (Logger.isDebugEnabled()) {
+			Logger.debug("> PollMongoBL.addMissingFalseValues(PollMongoResultEntity, BasicDBObject)");
+		}
+
 		BasicDBList optionNList = (BasicDBList) object.get("optionNames");
 		if (entryEntity.optionValues != null
 				&& entryEntity.optionValues.size() > 0) {
@@ -145,6 +173,10 @@ public class PollMongoBL {
 			for (int i = 0; i < sizeDifference; i++) {
 				entryEntity.optionValues.add(Boolean.FALSE);
 			}
+		}
+
+		if (Logger.isDebugEnabled()) {
+			Logger.debug("< PollMongoBL.addMissingFalseValues(PollMongoResultEntity, BasicDBObject)");
 		}
 	}
 
