@@ -267,11 +267,9 @@ public class PollController extends Controller {
 
 		final PollEntryForm pef = form(PollEntryForm.class).bindFromRequest()
 				.get();
-		// TODO This must be changed, you don't know what happens here in a multi-threaded environment, do you?
-		if(UserController.user != null) {
-			pef.participant = UserController.user.username;
-			pef.email = UserController.user.email;
-		}
+		// TODO Better use a cache here or store an object
+		pef.participant = session().get("username");
+		pef.email = session().get("email");
 		
 		final PollMongoResultEntity pe = new PollMongoResultEntity();
 		pe.participantName = pef.participant;

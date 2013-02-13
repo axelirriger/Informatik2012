@@ -96,8 +96,6 @@ public class UserController extends Controller {
 		if (Logger.isDebugEnabled()) {
 			Logger.debug("> UserController.login()");
 		}
-
-		// TODO Not sure what you're doing in this method ... 
 		
 		Result result = null;
 		
@@ -119,21 +117,14 @@ public class UserController extends Controller {
 			}
 			
 			if (userEntity != null) {
-				user.username = userEntity.username;
-				user.password = userEntity.password;
-				user.email = userEntity.email;
-				if (Logger.isTraceEnabled()) {
-					Logger.trace("Logged in User:");
-					Logger.trace("Username: " + user.username);
-					Logger.trace("Email: " + user.email);
-				}
+				session().put("username", userEntity.username);
+				session().put("email", userEntity.email);
+				result = redirect("/");
 			} else {
-				user = null;
+				result = redirect("/");
 			}
 		}
 
-		Content html = views.html.login.render(registerForm);
-		result = ok(views.html.pageframe.render("content", html));
 		return result;
 	}
 }
