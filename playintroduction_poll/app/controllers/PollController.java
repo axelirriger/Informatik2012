@@ -1,47 +1,46 @@
 package controllers;
 
+import java.util.ArrayList;
 import java.util.List;
 
-import models.PollEntry;
-import models.PollModel;
+import models.PollMongoEntity;
+import models.PollMongoResultEntity;
 import play.Logger;
 import play.data.Form;
 import play.libs.Akka;
 import play.mvc.Content;
 import play.mvc.Controller;
 import play.mvc.Result;
+import util.PollMongoBL;
 import actors.PollActor;
 import actors.messages.PollMessage;
 import akka.actor.ActorRef;
 import akka.actor.EmptyLocalActorRef;
 import akka.actor.Props;
-
-import com.avaje.ebean.Ebean;
-
 import forms.PollEntryForm;
 import forms.PollForm;
 
 public class PollController extends Controller {
 	private static final String AKKA_POLL_LOOKUP_PREFIX = "/user/";
 	private static Form<PollForm> pollForm = form(PollForm.class);
-	//mmmmm
+
 	public static Result showPolls() {
 		if (Logger.isDebugEnabled()) {
 			Logger.debug("> PollController.showPolls()");
 		}
 
 		final long start = System.currentTimeMillis();
-		final List<PollModel> pms = PollModel.findByName.all();
+		final List<PollMongoEntity> polls = PollMongoBL.getAllPolls();
 		final long end = System.currentTimeMillis();
 
 		if (Logger.isDebugEnabled()) {
-			Logger.debug("PollController.showPolls: Loading in " + (end - start)
-					+ " msec");
+			Logger.debug("PollController.showPolls: Loading in "
+					+ (end - start) + " msec");
 		}
-		
-		Content html = views.html.polls.render(pms);
-		
-		return ok(views.html.pageframe.render("content",html));
+
+		Content html = views.html.polls.render(polls);
+
+		return ok(views.html.pageframe.render("content", html));
 	}
 
 	public static Result newPoll() {
@@ -58,75 +57,104 @@ public class PollController extends Controller {
 					+ (end - start) + " msec");
 			Logger.debug("< PollController.newPoll()");
 		}
-		return ok(views.html.pageframe.render("content",html));
+		return ok(views.html.pageframe.render("content", html));
 	}
 
 	public static Result submit() {
 		if (Logger.isDebugEnabled()) {
 			Logger.debug("> PollController.submit()");
 		}
-		
+		String[] postAction = request().body().asFormUrlEncoded().get("action");
+		String action = postAction[0];
+		if ("addRow".equalsIgnoreCase(action)) {
+			return addNewOption();
+		} else if (action.startsWith("optionsName_")) {
+			String[] splitStrings = action.split("_");
+			String indexString = splitStrings[splitStrings.length - 1];
+			int index = Integer.parseInt(indexString);
+			return deleteOption(index);
+		} else {
+			return submitPoll();
+		}
+	}
+
+	private static Result submitPoll() {
 		Result res = null;
 
 		final PollForm form = pollForm.bindFromRequest().get();
 		if (Logger.isTraceEnabled()) {
 			Logger.trace("Poll name: '" + form.pollName + "'");
 			Logger.trace("Poll description: '" + form.pollDescription + "'");
-			Logger.trace("Option 1: '" + form.option1 + "'");
-			Logger.trace("Option 2: '" + form.option2 + "'");
-			Logger.trace("Option 3: '" + form.option3 + "'");
-			Logger.trace("Option 4: '" + form.option4 + "'");
-			Logger.trace("Option 5: '" + form.option5 + "'");
+			for (int i = 0; i < form.optionsName.size(); i++) {
+				Logger.trace("Option " + i + " '" + form.optionsName.get(i)
+						+ "'");
+			}
 		}
 
 		createPollActor(form.pollName);
-		
-		if (PollModel.findByName.byId(form.pollName) == null) {
 
-			final PollModel pm = new PollModel();
-			pm.name = form.pollName;
-			pm.description = form.pollDescription;
+		if (PollMongoBL.loadPoll(form.pollName) == null) {
+			PollMongoEntity pollEntity = new PollMongoEntity();
 
-			if (form.option1 != null && !"".equals(form.option1)) {
-				pm.option1 = form.option1;
-			}
+			pollEntity.pollName = form.pollName;
+			pollEntity.pollDescription = form.pollDescription;
 
-			if (form.option2 != null && !"".equals(form.option2)) {
-				pm.option2 = form.option2;
-			}
-
-			if (form.option3 != null && !"".equals(form.option3)) {
-				pm.option3 = form.option3;
-			}
-
-			if (form.option4 != null && !"".equals(form.option4)) {
-				pm.option4 = form.option4;
-			}
-
-			if (form.option4 != null && !"".equals(form.option4)) {
-				pm.option4 = form.option4;
-			}
-
-			if (form.option5 != null && !"".equals(form.option5)) {
-				pm.option5 = form.option5;
+			for (String option : form.optionsName) {
+				if (option != null && !option.equals("")) {
+					pollEntity.optionsName.add(option);
+				}
 			}
 
 			final long start = System.currentTimeMillis();
-			Ebean.save(pm);
+			PollMongoBL.savePoll(pollEntity);
 			final long end = System.currentTimeMillis();
 			if (Logger.isDebugEnabled()) {
 				Logger.debug("PollController.submit: Saving in "
 						+ (end - start) + " msec");
 			}
-			res = doPoll(pm.name);
+			res = doPoll(pollEntity.pollName);
 		} else {
 			res = badRequest("Poll already exists");
 		}
-		
+
 		if (Logger.isDebugEnabled()) {
 			Logger.debug("< PollController.submit()");
 		}
 		return res;
+	}
+
+	private static Result deleteOption(int index) {
+		if (Logger.isDebugEnabled()) {
+			Logger.debug("PollController.deleteOption() with index " + index);
+		}
+		final PollForm form = pollForm.bindFromRequest().get();
+		form.optionsName.remove(index);
+		final Form<PollForm> newPollForm = pollForm.fill(form);
+		final long start = System.currentTimeMillis();
+		Content html = views.html.poll.render(newPollForm);
+		final long end = System.currentTimeMillis();
+		if (Logger.isDebugEnabled()) {
+			Logger.debug("PollController.submit: Delete option in "
+					+ (end - start) + " msec");
+		}
+		return ok(views.html.pageframe.render("content", html));
+	}
+
+	private static Result addNewOption() {
+		if (Logger.isDebugEnabled()) {
+			Logger.debug("PollController.addNewOption()");
+		}
+		final PollForm form = pollForm.bindFromRequest().get();
+		form.optionsName.add("");
+		final Form<PollForm> newPollForm = pollForm.fill(form);
+		final long start = System.currentTimeMillis();
+		Content html = views.html.poll.render(newPollForm);
+		final long end = System.currentTimeMillis();
+		if (Logger.isDebugEnabled()) {
+			Logger.debug("PollController.submit: Add new Option in "
+					+ (end - start) + " msec");
+		}
+		return ok(views.html.pageframe.render("content", html));
 	}
 
 	public static Result read(final String pollName) {
@@ -138,7 +166,7 @@ public class PollController extends Controller {
 		}
 
 		final long start = System.currentTimeMillis();
-		final PollModel pm = PollModel.findByName.byId(pollName);
+		PollMongoEntity pollEntity = PollMongoBL.loadPoll(pollName);
 		final long end = System.currentTimeMillis();
 
 		if (Logger.isDebugEnabled()) {
@@ -147,13 +175,9 @@ public class PollController extends Controller {
 		}
 
 		final PollForm pf = new PollForm();
-		pf.pollName = pm.name;
-		pf.pollDescription = pm.description;
-		pf.option1 = pm.option1;
-		pf.option2 = pm.option2;
-		pf.option3 = pm.option3;
-		pf.option4 = pm.option4;
-		pf.option5 = pm.option5;
+		pf.pollName = pollEntity.pollName;
+		pf.pollDescription = pollEntity.pollDescription;
+		pf.optionsName = new ArrayList<String>(pollEntity.optionsName);
 
 		final long start2 = System.currentTimeMillis();
 		Content html = views.html.poll.render(pollForm.fill(pf));
@@ -168,66 +192,65 @@ public class PollController extends Controller {
 	}
 
 	public static Result doPoll(String name) {
-		if(Logger.isDebugEnabled()) {
+		if (Logger.isDebugEnabled()) {
 			Logger.debug("> PollController.doPoll(String)");
-			if(Logger.isTraceEnabled()) {
+			if (Logger.isTraceEnabled()) {
 				Logger.trace("Parameter: '" + name + "'");
 			}
 		}
-		
+
 		Result res = null;
 
-		PollModel pm = PollModel.findByName.byId(name);
-		if(pm != null) {
+		PollMongoEntity pollEntity = PollMongoBL.loadPoll(name);
+		if (pollEntity != null) {
 			final long start = System.currentTimeMillis();
-			final List<PollEntry> entries = Ebean.find(PollEntry.class).where().eq("poll_name", name).findList();
 			final long end = System.currentTimeMillis();
-			
-			if(Logger.isDebugEnabled()) {
-				Logger.debug("PollController.doPoll: Loading in " + (end-start) + " msec");
+			if (Logger.isDebugEnabled()) {
+				Logger.debug("PollController.doPoll: Loading in "
+						+ (end - start) + " msec");
 			}
-			
-			Content html = views.html.doPoll.render(pm, entries, form(PollEntryForm.class));
-			
-			
-			res = ok(views.html.pageframe.render("content",html));
+
+			Content html = views.html.doPoll.render(pollEntity,
+					pollEntity.results, form(PollEntryForm.class));
+
+			res = ok(views.html.pageframe.render("content", html));
 		} else {
 			res = badRequest("Poll does not exist");
 		}
-		
-		
-		if(Logger.isDebugEnabled()) {
+
+		if (Logger.isDebugEnabled()) {
 			Logger.debug("< PollController.doPoll(String)");
 		}
 		return res;
 	}
-	
+
 	public static Result savePoll(String name) {
-		if(Logger.isDebugEnabled()) {
+		if (Logger.isDebugEnabled()) {
 			Logger.debug("> PollController.savePoll()");
 		}
 
 		Result res = null;
+
+		final PollEntryForm pef = form(PollEntryForm.class).bindFromRequest()
+				.get();
+		if(UserController.user != null){
+			pef.participant = UserController.user.username;
+			pef.email = UserController.user.email;
+		}
 		
-		final PollEntryForm pef = form(PollEntryForm.class).bindFromRequest().get();
-		
-		final PollEntry pe = new PollEntry();
-		pe.poll = PollModel.findByName.byId(name);
+		final PollMongoResultEntity pe = new PollMongoResultEntity();
 		pe.participantName = pef.participant;
-		pe.option1 = pef.option1;
-		pe.option2 = pef.option2;
-		pe.option3 = pef.option3;
-		pe.option4 = pef.option4;
-		pe.option5 = pef.option5;
+		pe.email = pef.email;
+		pe.optionValues = new ArrayList<Boolean>(pef.optionValues);
 		
 		//
 		sendMessageToActor(name, pef.email);
-		
-		Ebean.save(pe);
-		
+
+		PollMongoBL.addEntryToPoll(name, pe);
+
 		res = doPoll(name);
-		
-		if(Logger.isDebugEnabled()) {
+
+		if (Logger.isDebugEnabled()) {
 			Logger.debug("< PollController.savePoll()");
 		}
 		return res;
@@ -237,10 +260,11 @@ public class PollController extends Controller {
 		Props props = new Props(PollActor.class);
 		Akka.system().actorOf(props, name);
 	}
-	
+
 	private static void sendMessageToActor(String pollName, String email) {
-		ActorRef ref = Akka.system().actorFor(AKKA_POLL_LOOKUP_PREFIX + pollName);
-		if(!(ref instanceof EmptyLocalActorRef)){
+		ActorRef ref = Akka.system().actorFor(
+				AKKA_POLL_LOOKUP_PREFIX + pollName);
+		if (!(ref instanceof EmptyLocalActorRef)) {
 			PollMessage pollMessage = new PollMessage();
 			pollMessage.emailAddress = email;
 			pollMessage.pollName = pollName;
