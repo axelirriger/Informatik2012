@@ -8,28 +8,28 @@ import org.apache.commons.mail.EmailException;
 import org.apache.commons.mail.SimpleEmail;
 
 import play.Logger;
-import actors.messages.EmailsMessage;
-import actors.messages.PollMessage;
+import actors.messages.SendEmailMessage;
+import actors.messages.NewPollParticipantMessage;
 import akka.actor.UntypedActor;
 
 public class EmailVersandActor extends UntypedActor {
 
 	@Override
 	public void onReceive(Object message) throws Exception {
-		if(message instanceof EmailsMessage){
-			sendMessageToAll(((EmailsMessage) message).emailsList);
+		if(message instanceof SendEmailMessage){
+			sendMessageToAll(((SendEmailMessage) message).recipientList);
 		}else{
 			unhandled(message);
 		}
 	}
 
-	private void sendMessageToAll(List<PollMessage> emailsList) {
-		for(PollMessage pollMsg : emailsList){
+	private void sendMessageToAll(List<NewPollParticipantMessage> emailsList) {
+		for(NewPollParticipantMessage pollMsg : emailsList){
 			sendMessage(pollMsg);
 		}
 	}
 
-	private void sendMessage(PollMessage pollMsg) {
+	private void sendMessage(NewPollParticipantMessage pollMsg) {
 		if(Logger.isDebugEnabled()){
 			Logger.debug(" Send mail to: " + pollMsg.emailAddress);
 		}

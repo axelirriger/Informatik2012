@@ -5,8 +5,8 @@ import java.util.List;
 import play.Logger;
 import play.libs.Akka;
 
-import actors.messages.EmailsMessage;
-import actors.messages.PollMessage;
+import actors.messages.SendEmailMessage;
+import actors.messages.NewPollParticipantMessage;
 import akka.actor.ActorRef;
 import akka.actor.EmptyLocalActorRef;
 import akka.actor.Props;
@@ -16,26 +16,26 @@ public class PollActor extends UntypedActor {
 	private static final String AKKA_EMAIL_CREATION_PREFIX = "email_versand";
 	private static final String AKKA_EMAIL_LOOKUP_PREFIX = "/user/email_versand";
 	
-	List<PollMessage> mailList = new ArrayList<PollMessage>();
+	List<NewPollParticipantMessage> mailList = new ArrayList<NewPollParticipantMessage>();
 
 	@Override
 	public void onReceive(Object message) throws Exception {
-		if(message instanceof PollMessage){
-			sendMailToParticipants((PollMessage)message);
+		if(message instanceof NewPollParticipantMessage){
+			sendMailToParticipants((NewPollParticipantMessage)message);
 		}else{
 			unhandled(message);
 		}
 		
 	}
 
-	private void sendMailToParticipants(PollMessage message) {
+	private void sendMailToParticipants(NewPollParticipantMessage message) {
 		mailList.add( message);
 		if (Logger.isDebugEnabled()) {
 			Logger.debug("Poll " + message.pollName +" changed!");
 		}
 		
-		EmailsMessage emailMsg = new EmailsMessage();
-		emailMsg.emailsList = this.mailList;
+		SendEmailMessage emailMsg = new SendEmailMessage();
+		emailMsg.recipientList = this.mailList;
 
 		ActorRef ref = lookupEmailVersandActor();
 		ref.tell(emailMsg);

@@ -13,7 +13,7 @@ import play.mvc.Controller;
 import play.mvc.Result;
 import util.PollMongoBL;
 import actors.PollActor;
-import actors.messages.PollMessage;
+import actors.messages.NewPollParticipantMessage;
 import akka.actor.ActorRef;
 import akka.actor.EmptyLocalActorRef;
 import akka.actor.Props;
@@ -265,7 +265,7 @@ public class PollController extends Controller {
 		ActorRef ref = Akka.system().actorFor(
 				AKKA_POLL_LOOKUP_PREFIX + pollName);
 		if (!(ref instanceof EmptyLocalActorRef)) {
-			PollMessage pollMessage = new PollMessage();
+			NewPollParticipantMessage pollMessage = new NewPollParticipantMessage();
 			pollMessage.emailAddress = email;
 			pollMessage.pollName = pollName;
 			ref.tell(pollMessage);

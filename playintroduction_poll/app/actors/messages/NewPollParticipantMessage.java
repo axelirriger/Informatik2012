@@ -1,6 +1,6 @@
 package actors.messages;
 
-public class PollMessage {
+public class NewPollParticipantMessage {
 
 	public String emailAddress;
 	public String pollName;
