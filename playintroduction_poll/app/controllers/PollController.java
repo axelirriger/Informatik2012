@@ -82,8 +82,8 @@ public class PollController extends Controller {
 		if ("addRow".equalsIgnoreCase(action)) {
 			result = addNewOption();
 		} else if (action.startsWith("optionsName_")) {
-			String[] splitStrings = action.split("_");
-			String indexString = splitStrings[splitStrings.length - 1];
+			final String[] splitStrings = action.split("_");
+			final String indexString = splitStrings[splitStrings.length - 1];
 			int index = Integer.parseInt(indexString);
 			result = deleteOption(index);
 		} else {
@@ -101,27 +101,26 @@ public class PollController extends Controller {
 			Logger.debug("> PollController.submitPoll()");
 		}
 		
-		Result res = null;
-
 		final PollForm form = pollForm.bindFromRequest().get();
 		if (Logger.isTraceEnabled()) {
 			Logger.trace("Poll name: '" + form.pollName + "'");
 			Logger.trace("Poll description: '" + form.pollDescription + "'");
-			for (int i = 0; i < form.optionsName.size(); i++) {
+			int optionSize = form.optionsName.size();
+			for (int i = 0; i < optionSize; i++) {
 				Logger.trace("Option " + i + " '" + form.optionsName.get(i)
 						+ "'");
 			}
 		}
-
+		
 		createPollActor(form.pollName);
 
+		Result res = null;
 		if (PollMongoBL.loadPoll(form.pollName) == null) {
-			PollMongoEntity pollEntity = new PollMongoEntity();
-
+			final PollMongoEntity pollEntity = new PollMongoEntity();
 			pollEntity.pollName = form.pollName;
 			pollEntity.pollDescription = form.pollDescription;
 
-			for (String option : form.optionsName) {
+			for (final String option : form.optionsName) {
 				if (option != null && !option.equals("")) {
 					pollEntity.optionsName.add(option);
 				}
@@ -153,6 +152,7 @@ public class PollController extends Controller {
 		final PollForm form = pollForm.bindFromRequest().get();
 		form.optionsName.remove(index);
 		final Form<PollForm> newPollForm = pollForm.fill(form);
+
 		final long start = System.currentTimeMillis();
 		Content html = views.html.poll.render(newPollForm);
 		final long end = System.currentTimeMillis();
@@ -173,6 +173,7 @@ public class PollController extends Controller {
 		if (Logger.isDebugEnabled()) {
 			Logger.debug("> PollController.addNewOption()");
 		}
+		
 		final PollForm form = pollForm.bindFromRequest().get();
 		form.optionsName.add("");
 		final Form<PollForm> newPollForm = pollForm.fill(form);
@@ -200,9 +201,9 @@ public class PollController extends Controller {
 			}
 		}
 
-		final long start = System.currentTimeMillis();
+		long start = System.currentTimeMillis();
 		PollMongoEntity pollEntity = PollMongoBL.loadPoll(pollName);
-		final long end = System.currentTimeMillis();
+		long end = System.currentTimeMillis();
 
 		if (Logger.isDebugEnabled()) {
 			Logger.debug("PollController.read: Loading in " + (end - start)
@@ -214,12 +215,12 @@ public class PollController extends Controller {
 		pf.pollDescription = pollEntity.pollDescription;
 		pf.optionsName = new ArrayList<String>(pollEntity.optionsName);
 
-		final long start2 = System.currentTimeMillis();
+		start = System.currentTimeMillis();
 		Content html = views.html.poll.render(pollForm.fill(pf));
-		final long end2 = System.currentTimeMillis();
+		end = System.currentTimeMillis();
 
 		if (Logger.isDebugEnabled()) {
-			Logger.debug("PollController.read: Rendering in " + (end2 - start2)
+			Logger.debug("PollController.read: Rendering in " + (end - start)
 					+ " msec");
 			Logger.debug("< PollController.read(String)");
 		}
@@ -236,16 +237,16 @@ public class PollController extends Controller {
 
 		Result res = null;
 
-		PollMongoEntity pollEntity = PollMongoBL.loadPoll(name);
-		if (pollEntity != null) {
-			final long start = System.currentTimeMillis();
-			final long end = System.currentTimeMillis();
-			if (Logger.isDebugEnabled()) {
-				Logger.debug("PollController.doPoll: Loading in "
-						+ (end - start) + " msec");
-			}
+		long start = System.currentTimeMillis();
+		final PollMongoEntity pollEntity = PollMongoBL.loadPoll(name);
+		long end = System.currentTimeMillis();
+		if (Logger.isDebugEnabled()) {
+			Logger.debug("PollController.doPoll: Loading in "
+					+ (end - start) + " msec");
+		}
 
-			Content html = views.html.doPoll.render(pollEntity,
+		if (pollEntity != null) {
+			final Content html = views.html.doPoll.render(pollEntity,
 					pollEntity.results, form(PollEntryForm.class));
 
 			res = ok(views.html.pageframe.render("content", html));
@@ -264,11 +265,10 @@ public class PollController extends Controller {
 			Logger.debug("> PollController.savePoll(String)");
 		}
 
-		Result res = null;
-
 		final PollEntryForm pef = form(PollEntryForm.class).bindFromRequest()
 				.get();
-		if(UserController.user != null){
+		// TODO This must be changed, you don't know what happens here in a multi-threaded environment, do you?
+		if(UserController.user != null) {
 			pef.participant = UserController.user.username;
 			pef.email = UserController.user.email;
 		}
@@ -278,12 +278,9 @@ public class PollController extends Controller {
 		pe.email = pef.email;
 		pe.optionValues = new ArrayList<Boolean>(pef.optionValues);
 		
-		//
 		sendMessageToActor(name, pef.email);
-
 		PollMongoBL.addEntryToPoll(name, pe);
-
-		res = doPoll(name);
+		final Result res = doPoll(name);
 
 		if (Logger.isDebugEnabled()) {
 			Logger.debug("< PollController.savePoll(String)");
@@ -291,19 +288,21 @@ public class PollController extends Controller {
 		return res;
 	}
 
-	private static void createPollActor(String name) {
+	private static void createPollActor(final String name) {
 		Props props = new Props(PollActor.class);
 		Akka.system().actorOf(props, name);
 	}
 
-	private static void sendMessageToActor(String pollName, String email) {
+	private static void sendMessageToActor(final String pollName, final String email) {
 		ActorRef ref = Akka.system().actorFor(
 				AKKA_POLL_LOOKUP_PREFIX + pollName);
 		if (!(ref instanceof EmptyLocalActorRef)) {
-			NewPollParticipantMessage pollMessage = new NewPollParticipantMessage();
+			final NewPollParticipantMessage pollMessage = new NewPollParticipantMessage();
 			pollMessage.emailAddress = email;
 			pollMessage.pollName = pollName;
 			ref.tell(pollMessage);
+		} else {
+			// TODO What happens here? Can this happen?
 		}
 	}
 }
