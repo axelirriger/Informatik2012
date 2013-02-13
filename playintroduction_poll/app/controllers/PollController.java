@@ -24,14 +24,15 @@ public class PollController extends Controller {
 	
 	private static final String AKKA_POLL_LOOKUP_PREFIX = "/user/";
 	private static final Form<PollForm> pollForm = form(PollForm.class);
-
+	private static final PollMongoBL pollMongoBL = new PollMongoBL();
+	
 	public static Result showPolls() {
 		if (Logger.isDebugEnabled()) {
 			Logger.debug("> PollController.showPolls()");
 		}
 
 		long start = System.currentTimeMillis();
-		final List<PollMongoEntity> polls = PollMongoBL.getAllPolls();
+		final List<PollMongoEntity> polls = pollMongoBL.getAllPolls();
 		long end = System.currentTimeMillis();
 
 		if (Logger.isDebugEnabled()) {
@@ -115,7 +116,7 @@ public class PollController extends Controller {
 		createPollActor(form.pollName);
 
 		Result res = null;
-		if (PollMongoBL.loadPoll(form.pollName) == null) {
+		if (pollMongoBL.loadPoll(form.pollName) == null) {
 			final PollMongoEntity pollEntity = new PollMongoEntity();
 			pollEntity.pollName = form.pollName;
 			pollEntity.pollDescription = form.pollDescription;
@@ -127,7 +128,7 @@ public class PollController extends Controller {
 			}
 
 			final long start = System.currentTimeMillis();
-			PollMongoBL.savePoll(pollEntity);
+			pollMongoBL.savePoll(pollEntity);
 			final long end = System.currentTimeMillis();
 			if (Logger.isDebugEnabled()) {
 				Logger.debug("PollController.submit: Saving in "
@@ -202,7 +203,7 @@ public class PollController extends Controller {
 		}
 
 		long start = System.currentTimeMillis();
-		PollMongoEntity pollEntity = PollMongoBL.loadPoll(pollName);
+		PollMongoEntity pollEntity = pollMongoBL.loadPoll(pollName);
 		long end = System.currentTimeMillis();
 
 		if (Logger.isDebugEnabled()) {
@@ -238,7 +239,7 @@ public class PollController extends Controller {
 		Result res = null;
 
 		long start = System.currentTimeMillis();
-		final PollMongoEntity pollEntity = PollMongoBL.loadPoll(name);
+		final PollMongoEntity pollEntity = pollMongoBL.loadPoll(name);
 		long end = System.currentTimeMillis();
 		if (Logger.isDebugEnabled()) {
 			Logger.debug("PollController.doPoll: Loading in "
@@ -277,7 +278,7 @@ public class PollController extends Controller {
 		pe.optionValues = new ArrayList<Boolean>(pef.optionValues);
 		
 		sendMessageToActor(name, pef.email);
-		PollMongoBL.addEntryToPoll(name, pe);
+		pollMongoBL.addEntryToPoll(name, pe);
 		final Result res = doPoll(name);
 
 		if (Logger.isDebugEnabled()) {

@@ -12,7 +12,8 @@ import util.UserMongoBL;
 public class UserController extends Controller {
 
 	private static Form<RegisterLoginForm> registerForm = form(RegisterLoginForm.class);
-
+	private static UserMongoBL userMongoBL = new UserMongoBL();
+	
 	public static Result startUserRegister() {
 		if (Logger.isDebugEnabled()) {
 			Logger.debug("> UserController.startUserRegister()");
@@ -55,7 +56,7 @@ public class UserController extends Controller {
 			userEntity.email = user.email;
 
 			long start = System.currentTimeMillis();
-			UserMongoBL.saveUser(userEntity);
+			userMongoBL.saveUser(userEntity);
 			long end = System.currentTimeMillis();
 			if (Logger.isDebugEnabled()) {
 				Logger.debug(" User saved in " + (end - start) + " ms");
@@ -110,7 +111,7 @@ public class UserController extends Controller {
 			UserMongoEntity userEntity = new UserMongoEntity(user);
 
 			long start = System.currentTimeMillis();
-			userEntity = UserMongoBL.loadUser(userEntity);
+			userEntity = userMongoBL.loadUser(userEntity);
 			long end = System.currentTimeMillis();
 			if (Logger.isDebugEnabled()) {
 				Logger.debug("User loaded in " + (end - start) + " ms");

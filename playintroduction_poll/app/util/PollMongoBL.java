@@ -18,22 +18,23 @@ import play.Logger;
 
 public class PollMongoBL {
 
-	private static DBCollection collection;
+	private DBCollection collection;
 
-	public static DBCollection getCollection() {
-		if (collection == null) {
-			try {
-				MongoClient mongoClient = new MongoClient("localhost", 27017);
-				DB db = mongoClient.getDB("playDb");
-				collection = db.getCollection("polls");
-			} catch (UnknownHostException e) {
-				e.printStackTrace();
-			}
+	public PollMongoBL() {
+		try {
+			MongoClient mongoClient = new MongoClient("localhost", 27017);
+			DB db = mongoClient.getDB("playDb");
+			collection = db.getCollection("polls");
+		} catch (UnknownHostException e) {
+			throw new RuntimeException(e);
 		}
+	}
+
+	public DBCollection getCollection() {
 		return collection;
 	}
 
-	public static List<PollMongoEntity> getAllPolls() {
+	public List<PollMongoEntity> getAllPolls() {
 		if (Logger.isDebugEnabled()) {
 			Logger.debug("> PollMongoBL.getAllPolls()");
 		}
@@ -44,13 +45,13 @@ public class PollMongoBL {
 			allPolls.add(buildPollEntity(object));
 		}
 		cursor.close();
-		if(Logger.isTraceEnabled()){
+		if (Logger.isTraceEnabled()) {
 			Logger.trace(" Loaded " + allPolls.size() + " Polls");
 		}
 		return allPolls;
 	}
 
-	public static void savePoll(PollMongoEntity pollEntity) {
+	public void savePoll(PollMongoEntity pollEntity) {
 		if (Logger.isDebugEnabled()) {
 			Logger.debug("> PollMongoBL.savePoll()");
 		}
@@ -63,7 +64,7 @@ public class PollMongoBL {
 		getCollection().insert(toSave);
 	}
 
-	public static PollMongoEntity loadPoll(String pollName) {
+	public PollMongoEntity loadPoll(String pollName) {
 		if (Logger.isDebugEnabled()) {
 			Logger.debug("> PollMongoBL.loadPoll()");
 		}
@@ -101,7 +102,7 @@ public class PollMongoBL {
 		return entity;
 	}
 
-	public static void addEntryToPoll(String pollName,
+	public void addEntryToPoll(String pollName,
 			PollMongoResultEntity entryEntity) {
 		if (Logger.isDebugEnabled()) {
 			Logger.debug("> PollMongoBL.addEntryToPoll(String, PollMongoResultEntity)");
@@ -126,8 +127,8 @@ public class PollMongoBL {
 		}
 	}
 
-	private static void addMissingFalseValues(
-			PollMongoResultEntity entryEntity, BasicDBObject object) {
+	private void addMissingFalseValues(PollMongoResultEntity entryEntity,
+			BasicDBObject object) {
 		BasicDBList optionNList = (BasicDBList) object.get("optionNames");
 		if (entryEntity.optionValues != null
 				&& entryEntity.optionValues.size() > 0) {
@@ -147,7 +148,7 @@ public class PollMongoBL {
 		}
 	}
 
-	private static BasicDBObject buildEntryFromEntity(
+	private BasicDBObject buildEntryFromEntity(
 			PollMongoResultEntity resultEntity) {
 		BasicDBObject element = new BasicDBObject();
 		element.put("name", resultEntity.participantName);
@@ -163,7 +164,7 @@ public class PollMongoBL {
 		return element;
 	}
 
-	private static PollMongoEntity buildPollEntity(DBObject object) {
+	private PollMongoEntity buildPollEntity(DBObject object) {
 		PollMongoEntity entity = new PollMongoEntity();
 		entity.pollName = (String) object.get("name");
 		entity.pollDescription = (String) object.get("beschreibung");
@@ -198,8 +199,7 @@ public class PollMongoBL {
 		return entity;
 	}
 
-	private static BasicDBObject buildDBObjectFromEntity(
-			PollMongoEntity pollEntity) {
+	private BasicDBObject buildDBObjectFromEntity(PollMongoEntity pollEntity) {
 		BasicDBObject object = new BasicDBObject();
 		object.put("name", pollEntity.pollName);
 		object.put("beschreibung", pollEntity.pollDescription);
