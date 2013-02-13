@@ -1,13 +1,12 @@
 package forms;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class PollEntryForm {
 
 	public String participant;
 	public String email;
-	public boolean option1;
-	public boolean option2;
-	public boolean option3;
-	public boolean option4;
-	public boolean option5;
+	public List<Boolean> optionValues = new ArrayList<Boolean>();
 	
 }

@@ -4,3 +4,4 @@ COMPONENT_WILL_BE_CREATED=Component does not exist. Component will be created
 COMPONENT_CREATED=Component created
 COMPONENT_ALREADY_EXISTS=Component '{0}' does already exist
 PRICE_UPDATED=Price updated
+check_Box.text=''

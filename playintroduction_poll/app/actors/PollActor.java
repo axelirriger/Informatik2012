@@ -21,19 +21,24 @@ public class PollActor extends UntypedActor {
 	@Override
 	public void onReceive(Object message) throws Exception {
 		if(message instanceof PollMessage){
-			mailList.add((PollMessage) message);
-			if (Logger.isDebugEnabled()) {
-				Logger.debug("Poll " + ((PollMessage) message).pollName +" changed!");
-			}
-			
-			EmailsMessage emailMsg = new EmailsMessage();
-			emailMsg.emailsList = this.mailList;
-			ActorRef ref = lookupEmailVersandActor();
-			ref.tell(emailMsg);
+			sendMailToParticipants((PollMessage)message);
 		}else{
 			unhandled(message);
 		}
 		
+	}
+
+	private void sendMailToParticipants(PollMessage message) {
+		mailList.add( message);
+		if (Logger.isDebugEnabled()) {
+			Logger.debug("Poll " + message.pollName +" changed!");
+		}
+		
+		EmailsMessage emailMsg = new EmailsMessage();
+		emailMsg.emailsList = this.mailList;
+
+		ActorRef ref = lookupEmailVersandActor();
+		ref.tell(emailMsg);
 	}
 
 	private static ActorRef lookupEmailVersandActor(){
