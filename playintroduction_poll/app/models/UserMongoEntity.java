@@ -1,7 +1,10 @@
 package models;
 
-import forms.RegisterLoginForm;
+import java.util.ArrayList;
+import java.util.List;
+
 import play.db.ebean.Model;
+import forms.RegisterLoginForm;
 
 public class UserMongoEntity extends Model{
 
@@ -12,6 +15,7 @@ public class UserMongoEntity extends Model{
 	public String username;
 	public String password;
 	public String email;
+	public List<String> completedPolls = new ArrayList<String>();
 	
 	public UserMongoEntity(){
 		

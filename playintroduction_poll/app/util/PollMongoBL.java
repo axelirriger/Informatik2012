@@ -68,7 +68,7 @@ public class PollMongoBL {
 			Logger.debug("> PollMongoBL.loadPoll()");
 		}
 		BasicDBObject object = new BasicDBObject();
-		object.put("name", pollName);
+		object.put("_id", pollName);
 		long start = System.currentTimeMillis();
 		DBCursor cursor = getCollection().find(object);
 		long end = System.currentTimeMillis();
@@ -107,7 +107,7 @@ public class PollMongoBL {
 			Logger.debug("> PollMongoBL.addEntryToPoll(String, PollMongoResultEntity)");
 		}
 		BasicDBObject query = new BasicDBObject();
-		query.put("name", pollName);
+		query.put("_id", pollName);
 		DBCursor cursor = getCollection().find(query);
 		if (cursor.hasNext()) {
 			BasicDBObject object = (BasicDBObject) cursor.next();
@@ -116,6 +116,8 @@ public class PollMongoBL {
 			BasicDBObject entryToSave = buildEntryFromEntity(entryEntity);
 			resultsList.add(entryToSave);
 			getCollection().update(query, object);
+			//add poll to completedPolls
+			UserMongoBL.addPollToCompletedPolls(entryEntity.participantName, pollName);
 		}
 		cursor.close();
 		if (Logger.isTraceEnabled()) {
@@ -150,7 +152,7 @@ public class PollMongoBL {
 	private static BasicDBObject buildEntryFromEntity(
 			PollMongoResultEntity resultEntity) {
 		BasicDBObject element = new BasicDBObject();
-		element.put("name", resultEntity.participantName);
+		element.put("_id", resultEntity.participantName);
 		element.put("email", resultEntity.email);
 		BasicDBList optionsList = new BasicDBList();
 		if (resultEntity.optionValues != null
@@ -165,8 +167,9 @@ public class PollMongoBL {
 
 	private static PollMongoEntity buildPollEntity(DBObject object) {
 		PollMongoEntity entity = new PollMongoEntity();
-		entity.pollName = (String) object.get("name");
+		entity.pollName = (String) object.get("_id");
 		entity.pollDescription = (String) object.get("beschreibung");
+		entity.creator = (String) object.get("creator");
 		BasicDBList optionNamesList = (BasicDBList) object.get("optionNames");
 		if (optionNamesList != null && optionNamesList.size() > 0) {
 			for (int i = 0; i < optionNamesList.size(); i++) {
@@ -180,7 +183,7 @@ public class PollMongoBL {
 				if (res instanceof DBObject) {
 					DBObject dbRes = (DBObject) res;
 					PollMongoResultEntity resultEntity = new PollMongoResultEntity();
-					resultEntity.participantName = (String) dbRes.get("name");
+					resultEntity.participantName = (String) dbRes.get("_id");
 					resultEntity.email = (String) dbRes.get("email");
 					BasicDBList optionsList = (BasicDBList) dbRes
 							.get("optionValues");
@@ -201,8 +204,9 @@ public class PollMongoBL {
 	private static BasicDBObject buildDBObjectFromEntity(
 			PollMongoEntity pollEntity) {
 		BasicDBObject object = new BasicDBObject();
-		object.put("name", pollEntity.pollName);
+		object.put("_id", pollEntity.pollName);
 		object.put("beschreibung", pollEntity.pollDescription);
+		object.put("creator", pollEntity.creator);
 		BasicDBList optionsList = new BasicDBList();
 		for (String option : pollEntity.optionsName) {
 			optionsList.add(option);
@@ -215,5 +219,17 @@ public class PollMongoBL {
 		}
 		object.put("results", resultsList);
 		return object;
+	}
+
+	public static List<PollMongoEntity> loadCreatedPolls(String username) {
+		BasicDBObject objectFinder = new BasicDBObject();
+		objectFinder.put("creator", username);
+		DBCursor cursor = getCollection().find(objectFinder);
+		List<PollMongoEntity> createdPollList = new ArrayList<PollMongoEntity>();
+		while(cursor.hasNext()){
+			BasicDBObject object = (BasicDBObject) cursor.next();
+			createdPollList.add(buildPollEntity(object));
+		}
+		return createdPollList;
 	}
 }

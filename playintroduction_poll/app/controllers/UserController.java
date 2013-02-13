@@ -1,13 +1,18 @@
 package controllers;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import models.PollMongoEntity;
 import models.UserMongoEntity;
-import forms.RegisterLoginForm;
 import play.Logger;
 import play.data.Form;
 import play.mvc.Content;
 import play.mvc.Controller;
 import play.mvc.Result;
+import util.PollMongoBL;
 import util.UserMongoBL;
+import forms.RegisterLoginForm;
 
 public class UserController extends Controller {
 
@@ -108,6 +113,24 @@ public class UserController extends Controller {
 			user = null;
 		}
 		Content html = views.html.login.render(registerForm);
+		return ok(views.html.pageframe.render("content",html));
+	}
+	
+	public static Result startUserProfile(){
+		if(Logger.isDebugEnabled()){
+			Logger.debug("> UserController.startUserProfile()");
+		}
+		if(user == null){
+			return redirect("/");
+		}
+		final List<PollMongoEntity> createdPolls =  PollMongoBL.loadCreatedPolls(user.username);
+		final Set<String> completedList = new HashSet<String>(UserMongoBL.loadCompletedPollsByUser(user.username));
+		long start = System.currentTimeMillis();
+		Content html = views.html.userProfile.render(createdPolls, completedList);
+		long end = System.currentTimeMillis();
+		if(Logger.isDebugEnabled()){
+			Logger.debug("User Profile Page loaded in " + (end-start) + " ms");
+		}
 		return ok(views.html.pageframe.render("content",html));
 	}
 }

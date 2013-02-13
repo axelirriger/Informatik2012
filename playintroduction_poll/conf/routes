@@ -17,6 +17,7 @@ GET		/userRegister						controllers.UserController.startUserRegister()
 POST	/userRegister						controllers.UserController.registerUser()
 GET		/login								controllers.UserController.startLogin()
 POST	/login								controllers.UserController.login()
+GET		/userProfile						controllers.UserController.startUserProfile()
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file              			controllers.Assets.at(path="/public", file)

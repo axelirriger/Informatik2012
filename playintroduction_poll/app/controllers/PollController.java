@@ -104,7 +104,9 @@ public class PollController extends Controller {
 					pollEntity.optionsName.add(option);
 				}
 			}
-
+			if(UserController.user != null){
+				pollEntity.creator = UserController.user.username;
+			}
 			final long start = System.currentTimeMillis();
 			PollMongoBL.savePoll(pollEntity);
 			final long end = System.currentTimeMillis();
