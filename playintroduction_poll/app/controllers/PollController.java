@@ -233,6 +233,11 @@ public class PollController extends Controller {
 
 		final PollEntryForm pef = form(PollEntryForm.class).bindFromRequest()
 				.get();
+		if(UserController.user != null){
+			pef.participant = UserController.user.username;
+			pef.email = UserController.user.email;
+		}
+		
 		final PollMongoResultEntity pe = new PollMongoResultEntity();
 		pe.participantName = pef.participant;
 		pe.email = pef.email;

@@ -24,8 +24,18 @@
 			</tr>
 			}
 			<tr>
-				<td>@helper.inputText(pollForm("participant"))</td>
-				<td>@helper.inputText(pollForm("email"))</td>
+				<td>
+				@if(UserController.user != null){
+					@UserController.user.username
+				}else{
+					@helper.inputText(pollForm("participant"))
+				}</td>
+				<td>
+				@if(UserController.user != null){
+					@UserController.user.email
+				}else{
+					@helper.inputText(pollForm("email"))
+				}</td>
 				@repeat(pollForm("optionValues"), min={pollModel.optionsName.size()}){ optionValueField =>
 					
 					<td>@helper.checkbox(optionValueField, '_label -> Messages(""), 'checked -> "unchecked")</td>

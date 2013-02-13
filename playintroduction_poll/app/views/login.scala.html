@@ -5,7 +5,7 @@
 	<h1>Login!</h1>
 		@helper.form(action=routes.UserController.login()) {
 			@helper.inputText(loginForm("username"))
-			@helper.inputText(loginForm("password"))
+			@helper.inputPassword(loginForm("password"))
 			<a href="/userRegister">Register</a>
 			<input class="btn btn-primary" type="submit" value="Login"/>
 		}
