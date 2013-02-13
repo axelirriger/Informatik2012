@@ -2,14 +2,13 @@ package util;
 
 import java.net.UnknownHostException;
 
-import play.Logger;
-
 import models.UserMongoEntity;
+import play.Logger;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
-import com.mongodb.DBCursor;
+import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 
 public class UserMongoBL {
@@ -30,42 +29,68 @@ public class UserMongoBL {
 		return collection;
 	}
 
-	public void saveUser(UserMongoEntity user) {
+	public void saveUser(final UserMongoEntity user) {
 		if (Logger.isDebugEnabled()) {
-			Logger.debug("> UserMongoBL.saveUser()");
+			Logger.debug("> UserMongoBL.saveUser(UserMongoEntity)");
 		}
-		BasicDBObject objectToSave = buildDBObjectFromEntity(user);
+
+		final DBObject objectToSave = buildDBObjectFromEntity(user);
 		getCollection().insert(objectToSave);
+
+		if (Logger.isDebugEnabled()) {
+			Logger.debug("< UserMongoBL.saveUser(UserMongoEntity)");
+		}
 	}
 
 	public UserMongoEntity loadUser(UserMongoEntity user) {
 		if (Logger.isDebugEnabled()) {
-			Logger.debug("> UserMongoBL.loadUser()");
+			Logger.debug("> UserMongoBL.loadUser(UserMongoEntity)");
 		}
-		BasicDBObject objectToFind = buildDBObjectFromEntity(user);
-		DBCursor cursor = getCollection().find(objectToFind);
-		if (cursor.hasNext()) {
-			BasicDBObject result = (BasicDBObject) cursor.next();
-			UserMongoEntity resultEnity = buildEntiryFromDBObject(result);
-			return resultEnity;
+
+		UserMongoEntity result = null;
+
+		final DBObject objectToFind = buildDBObjectFromEntity(user);
+		final DBObject obj = getCollection().findOne(objectToFind);
+		if (obj != null) {
+			result = buildEntityFromDBObject(obj);
 		}
-		return null;
+
+		if (Logger.isDebugEnabled()) {
+			Logger.debug("< UserMongoBL.loadUser(UserMongoEntity)");
+		}
+		return result;
 	}
 
-	private UserMongoEntity buildEntiryFromDBObject(BasicDBObject result) {
-		UserMongoEntity entity = new UserMongoEntity();
-		entity.username = result.getString("username");
-		entity.password = result.getString("password");
-		entity.email = result.getString("email");
+	private UserMongoEntity buildEntityFromDBObject(final DBObject result) {
+		if (Logger.isDebugEnabled()) {
+			Logger.debug("> UserMongoBL.buildEntityFromDBObject(UserMongoEntity)");
+		}
+
+		final UserMongoEntity entity = new UserMongoEntity();
+		entity.username = (String) result.get("username");
+		entity.password = (String) result.get("password");
+		entity.email = (String) result.get("email");
+
+		if (Logger.isDebugEnabled()) {
+			Logger.debug("< UserMongoBL.buildEntityFromDBObject(UserMongoEntity)");
+		}
 		return entity;
 	}
 
-	private BasicDBObject buildDBObjectFromEntity(UserMongoEntity user) {
-		BasicDBObject object = new BasicDBObject();
+	private DBObject buildDBObjectFromEntity(final UserMongoEntity user) {
+		if (Logger.isDebugEnabled()) {
+			Logger.debug("> UserMongoBL.buildDBObjectFromEntity(UserMongoEntity)");
+		}
+
+		DBObject object = new BasicDBObject();
 		object.put("username", user.username);
 		object.put("password", user.password);
 		if (user.email != null) {
 			object.put("email", user.email);
+		}
+
+		if (Logger.isDebugEnabled()) {
+			Logger.debug("< UserMongoBL.buildDBObjectFromEntity(UserMongoEntity)");
 		}
 		return object;
 	}
