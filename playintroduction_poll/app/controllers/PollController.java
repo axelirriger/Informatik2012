@@ -21,6 +21,7 @@ import forms.PollEntryForm;
 import forms.PollForm;
 
 public class PollController extends Controller {
+	
 	private static final String AKKA_POLL_LOOKUP_PREFIX = "/user/";
 	private static final Form<PollForm> pollForm = form(PollForm.class);
 
@@ -73,18 +74,26 @@ public class PollController extends Controller {
 		if (Logger.isDebugEnabled()) {
 			Logger.debug("> PollController.submit()");
 		}
-		String[] postAction = request().body().asFormUrlEncoded().get("action");
-		String action = postAction[0];
+		
+		final String[] postAction = request().body().asFormUrlEncoded().get("action");
+		final String action = postAction[0];
+		
+		Result result = null;
 		if ("addRow".equalsIgnoreCase(action)) {
-			return addNewOption();
+			result = addNewOption();
 		} else if (action.startsWith("optionsName_")) {
 			String[] splitStrings = action.split("_");
 			String indexString = splitStrings[splitStrings.length - 1];
 			int index = Integer.parseInt(indexString);
-			return deleteOption(index);
+			result = deleteOption(index);
 		} else {
-			return submitPoll();
+			result = submitPoll();
 		}
+		
+		if (Logger.isDebugEnabled()) {
+			Logger.debug("< PollController.submit()");
+		}
+		return result;
 	}
 
 	private static Result submitPoll() {
