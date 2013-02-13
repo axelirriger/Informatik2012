@@ -1,53 +1,80 @@
 package actors;
 
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.List;
 
-import org.apache.commons.mail.DefaultAuthenticator;
-import org.apache.commons.mail.Email;
-import org.apache.commons.mail.EmailException;
-import org.apache.commons.mail.SimpleEmail;
-
 import play.Logger;
-import actors.messages.SendEmailMessage;
 import actors.messages.NewPollParticipantMessage;
+import actors.messages.SendEmailMessage;
 import akka.actor.UntypedActor;
 
 public class EmailVersandActor extends UntypedActor {
 
+	/*
+	 * (non-Javadoc)
+	 * @see akka.actor.UntypedActor#onReceive(java.lang.Object)
+	 */
 	@Override
-	public void onReceive(Object message) throws Exception {
-		if(message instanceof SendEmailMessage){
-			sendMessageToAll(((SendEmailMessage) message).recipientList);
-		}else{
+	public void onReceive(final Object message) throws Exception {
+		if (Logger.isDebugEnabled()) {
+			Logger.debug("> onReceive(Object)");
+		}
+
+		if (message instanceof SendEmailMessage) {
+			final SendEmailMessage msg = (SendEmailMessage) message;
+			sendMessageToAll(msg.recipientList);
+		} else {
 			unhandled(message);
 		}
+
+		if (Logger.isDebugEnabled()) {
+			Logger.debug("< onReceive(Object)");
+		}
 	}
 
-	private void sendMessageToAll(List<NewPollParticipantMessage> emailsList) {
-		for(NewPollParticipantMessage pollMsg : emailsList){
+	private void sendMessageToAll(
+			final List<NewPollParticipantMessage> emailsList) {
+		if(Logger.isDebugEnabled()) {
+			Logger.debug("> sendMessageToAll()");
+		}
+		
+		for (final NewPollParticipantMessage pollMsg : emailsList) {
 			sendMessage(pollMsg);
 		}
+
+		if(Logger.isDebugEnabled()) {
+			Logger.debug("< sendMessageToAll()");
+		}
 	}
 
-	private void sendMessage(NewPollParticipantMessage pollMsg) {
-		if(Logger.isDebugEnabled()){
-			Logger.debug(" Send mail to: " + pollMsg.emailAddress);
-		}
-		try{
-			Email email = new SimpleEmail();
-			email.setHostName("smtp.gmail.com");
-			email.setSmtpPort(465);
-			email.setAuthenticator(new DefaultAuthenticator("alexandruvladut", "****"));
-			email.setSSLOnConnect(true);
-			email.setFrom("alexandruvladut@gmail.com");
-			email.setSubject("TestMail");
-			email.setMsg("This is a test mail ... :-)");
-			email.addTo("alexandruvladut@gmail.com");
-			email.send();
-		}catch(EmailException e){
-			if(Logger.isDebugEnabled()){
-				Logger.debug("Mail cannot be sent!");
+	private void sendMessage(final NewPollParticipantMessage pollMsg) {
+		if (Logger.isDebugEnabled()) {
+			Logger.debug("> sendMessage(NewPollParticipantMessage)");
+
+			if (Logger.isTraceEnabled()) {
+				Logger.trace("Mail recipient: '" + pollMsg.emailAddress + "'");
 			}
+		}
+
+		FileWriter writer = null;
+		try {
+			writer = new FileWriter(pollMsg.emailAddress + ".txt");
+			writer.write(pollMsg.pollName);
+		} catch (IOException e) {
+			Logger.error(e.getMessage(), e);
+		} finally {
+			if (writer != null) {
+				try {
+					writer.close();
+				} catch (IOException e) {
+					Logger.error(e.getMessage(), e);
+				}
+			}
+		}
+
+		if (Logger.isDebugEnabled()) {
+			Logger.debug("< sendMessage(NewPollParticipantMessage)");
 		}
 	}
 }
