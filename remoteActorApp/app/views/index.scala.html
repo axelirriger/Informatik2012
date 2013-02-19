@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <title>Akka Actors Remote</title>
+        <script type="text/javascript">
+        	var myinterval = setInterval('refreshMessage()', 12000);
+        	
+        	function refreshMessage()
+        	{
+        		var xmlhttp;
+        		if (window.XMLHttpRequest)
+        		  {// code for IE7+, Firefox, Chrome, Opera, Safari
+        		  xmlhttp=new XMLHttpRequest();
+        		  }
+        		else
+        		  {// code for IE6, IE5
+        		  xmlhttp=new ActiveXObject("Microsoft.XMLHTTP");
+        		  }
+        		xmlhttp.open("GET","/ajax",false);
+        		xmlhttp.send();
+        		document.getElementById("divMessage").innerHTML=xmlhttp.responseText;
+        		
+        	}
+        </script>
+    </head>
+    <body>
+    	<h1>Akka Actors Remote</h1>
+		<br />
+		<b>Last Message:</b>
+		<br />
+		<div id="divMessage">
+       	 	
+        </div>
+    </body>
+</html>
