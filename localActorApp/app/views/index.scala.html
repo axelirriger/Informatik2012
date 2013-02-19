@@ -1,0 +1,29 @@
+@(message: String)(messageForm: Form[forms.MessageForm])
+
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <title>Akka Actors Local</title>
+    </head>
+    <body>
+    <h1>Akka Actors Local</h1>
+    <div>
+    
+    	@helper.form(action=routes.Application.sendMessage()) {
+    	<table>
+    		<tr>
+				<td>@helper.inputText(messageForm("message"))</td>
+		</tr><tr>
+				<td><input type="submit" value="Send"/></td>
+			</tr>
+		</table>
+		}
+		
+		<br />
+		<b>Message Status:</b>
+		<br />
+		<div>@message</div>
+    </div>
+    </body>
+</html>
