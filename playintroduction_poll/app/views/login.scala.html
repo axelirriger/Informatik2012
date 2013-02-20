@@ -1,7 +1,7 @@
 @(loginForm : Form[forms.RegisterLoginForm])
 
 
-	@if(UserController.user == null){
+	@if(play.mvc.Controller.session().get("username") == null){
 	<h1>Login!</h1>
 		@helper.form(action=routes.UserController.login()) {
 			@helper.inputText(loginForm("username"))

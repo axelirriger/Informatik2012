@@ -4,7 +4,7 @@
 	<table>
   	<tr>
     	<td>User:</td>
-    	<td>@{UserController.user.username}</td>
+    	<td>@{play.mvc.Controller.session().get("username")}</td>
  	</tr>
 	</table>
 	<br />

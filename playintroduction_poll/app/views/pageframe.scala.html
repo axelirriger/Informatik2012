@@ -47,7 +47,7 @@
                   		<li><a href="/polls">Show all</a></li>
                 	</ul>
               	  </li>
-              	  @if(UserController.user == null){
+              	  @if(play.mvc.Controller.session().get("username") == null){
               	  	<li class="active"><a href="/login">Login</a></li>
               	  }else{
               	  	<li class="active"><a href="/login">Logout</a></li>

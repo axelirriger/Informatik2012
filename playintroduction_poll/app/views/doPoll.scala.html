@@ -25,14 +25,14 @@
 			}
 			<tr>
 				<td>
-				@if(UserController.user != null){
-					@UserController.user.username
+				@if(play.mvc.Controller.session().get("username") != null){
+					@play.mvc.Controller.session().get("username")
 				}else{
 					@helper.inputText(pollForm("participant"))
 				}</td>
 				<td>
-				@if(UserController.user != null){
-					@UserController.user.email
+				@if(play.mvc.Controller.session().get("email") != null){
+					@play.mvc.Controller.session().get("email")
 				}else{
 					@helper.inputText(pollForm("email"))
 				}</td>

@@ -1,3 +1,4 @@
+
 package controllers;
 
 import java.util.HashSet;
@@ -15,122 +16,127 @@ import util.UserMongoBL;
 import forms.RegisterLoginForm;
 
 public class UserController extends Controller {
-
-	private static Form<RegisterLoginForm> registerForm = form(RegisterLoginForm.class);
-	public static RegisterLoginForm user = null;
-	
-	public static Result startUserRegister(){
-		if(Logger.isDebugEnabled()){
-			Logger.debug("> UserController.startUserRegister()");
-		}
-		long start = System.currentTimeMillis();
-		Content html = views.html.userRegister.render(registerForm);
-		long end = System.currentTimeMillis();
-		if(Logger.isDebugEnabled()){
-			Logger.debug("Register page rendered in " + (end - start) + " ms");
-		}
-		return ok(views.html.pageframe.render("content",html));
-	}
-	
-	public static Result registerUser(){
-		if(Logger.isDebugEnabled()){
-			Logger.debug("> UserController.registerUser()");
-		}
-		user = registerForm.bindFromRequest().get();
-		if(user.username == null || user.username.equals("")||user.password == null||
-				user.password.equals("")||user.email==null||user.email.equals("")){
-			user = null; //try again
-			Content html = views.html.userRegister.render(registerForm);
-			return ok(views.html.pageframe.render("content",html));
-		}else{
-			UserMongoEntity userEntity = new UserMongoEntity();
-			userEntity.username = user.username;
-			userEntity.password = user.password;
-			userEntity.email = user.email;
-			
-			long start = System.currentTimeMillis();
-			UserMongoBL.saveUser(userEntity);
-			long end = System.currentTimeMillis();
-			if(Logger.isDebugEnabled()){
-				Logger.debug(" User saved in " + (end - start) + " ms");
-			}
-			if(Logger.isTraceEnabled()){
-				Logger.trace("Saved User:");
-				Logger.trace("Username: " + user.username);
-				Logger.trace("Email: " + user.email);
-			}
-			return redirect("/"); //redirect to main page
-		}
-	}
-	
-	public static Result startLogin(){
-		if(Logger.isDebugEnabled()){
-			Logger.debug("> UserController.startLogin()");
-		}
-		long start = System.currentTimeMillis();
-		Content html = views.html.login.render(registerForm);
-		long end = System.currentTimeMillis();
-		if(Logger.isDebugEnabled()){
-			Logger.debug("Login page loaded in " + (end - start) + " ms");
-		}
-		return ok(views.html.pageframe.render("content",html));
-	}
-	
-	public static Result login(){
-		if(Logger.isDebugEnabled()){
-			Logger.debug("> UserController.login()");
-		}
-		if(user == null){
-			user = registerForm.bindFromRequest().get();
-			if(user.username == null || user.username.equals("")||user.password == null||
-					user.password.equals("")){
-				user = null; //try again
-				if(Logger.isTraceEnabled()){
-					Logger.trace("Not all required fields are filled.");
-				}
-			}else{
-				UserMongoEntity userEntity = new UserMongoEntity(user);
-				long start = System.currentTimeMillis();
-				userEntity = UserMongoBL.loadUser(userEntity);
-				long end = System.currentTimeMillis();
-				if(Logger.isDebugEnabled()){
-					Logger.debug("User loaded in " + (end-start) + " ms");
-				}
-				if(userEntity != null){
-					user.username = userEntity.username;
-					user.password = userEntity.password;
-					user.email = userEntity.email;
-					if(Logger.isTraceEnabled()){
-						Logger.trace("Logged in User:");
-						Logger.trace("Username: " + user.username);
-						Logger.trace("Email: " + user.email);
-					}
-				}else{
-					user = null;
-				}
-			}
-		}else{
-			user = null;
-		}
-		Content html = views.html.login.render(registerForm);
-		return ok(views.html.pageframe.render("content",html));
-	}
-	
-	public static Result startUserProfile(){
-		if(Logger.isDebugEnabled()){
-			Logger.debug("> UserController.startUserProfile()");
-		}
-		if(user == null){
-			return redirect("/");
-		}
-		final List<PollMongoEntity> createdPolls =  PollMongoBL.loadCreatedPolls(user.username);
-		final Set<String> completedList = new HashSet<String>(UserMongoBL.loadCompletedPollsByUser(user.username));
-		long start = System.currentTimeMillis();
-		Content html = views.html.userProfile.render(createdPolls, completedList);
-		long end = System.currentTimeMillis();
-		if(Logger.isDebugEnabled()){
-			Logger.debug("User Profile Page loaded in " + (end-start) + " ms");
-		}
-		return ok(views.html.pageframe.render("content",html));
-	}
+    private static Form<RegisterLoginForm> registerForm = form(RegisterLoginForm.class);
+    private static UserMongoBL userMongoBL = new UserMongoBL();
+    private static PollMongoBL pollMongoBL = new PollMongoBL();
+    public static Result startUserRegister() {
+        if (Logger.isDebugEnabled()) {
+            Logger.debug("> UserController.startUserRegister()");
+        }
+        long start = System.currentTimeMillis();
+        Content html = views.html.userRegister.render(registerForm);
+        long end = System.currentTimeMillis();
+        if (Logger.isDebugEnabled()) {
+            Logger.debug("Register page rendered in " + (end - start) + " ms");
+        }
+        final Result result = ok(views.html.pageframe.render("content", html));
+        if (Logger.isDebugEnabled()) {
+            Logger.debug("< UserController.startUserRegister()");
+        }
+        return result;
+    }
+    public static Result registerUser() {
+        if (Logger.isDebugEnabled()) {
+            Logger.debug("> UserController.registerUser()");
+        }
+        final RegisterLoginForm user = registerForm.bindFromRequest().get();
+        Result result = null;
+        if (user.username == null || user.username.equals("") || user.password == null
+            || user.password.equals("") || user.email == null || user.email.equals("")) {
+            final Content html = views.html.userRegister.render(registerForm);
+            result = ok(views.html.pageframe.render("content", html));
+        }
+        else {
+            final UserMongoEntity userEntity = new UserMongoEntity();
+            userEntity.username = user.username;
+            // TODO Passwords should be hashed ;-)
+            userEntity.password = user.password;
+            userEntity.email = user.email;
+            long start = System.currentTimeMillis();
+            userMongoBL.saveUser(userEntity);
+            long end = System.currentTimeMillis();
+            if (Logger.isDebugEnabled()) {
+                Logger.debug(" User saved in " + (end - start) + " ms");
+                if (Logger.isTraceEnabled()) {
+                    Logger.trace("Username: " + user.username);
+                    Logger.trace("Email: " + user.email);
+                }
+            }
+            result = redirect("/"); // redirect to main page
+        }
+        if (Logger.isDebugEnabled()) {
+            Logger.debug("< UserController.registerUser()");
+        }
+        return result;
+    }
+    public static Result startLogin() {
+        if (Logger.isDebugEnabled()) {
+            Logger.debug("> UserController.startLogin()");
+        }
+        long start = System.currentTimeMillis();
+        Content html = views.html.login.render(registerForm);
+        long end = System.currentTimeMillis();
+        final Result result = ok(views.html.pageframe.render("content", html));
+        if (Logger.isDebugEnabled()) {
+            Logger.debug("Login page loaded in " + (end - start) + " ms");
+            Logger.debug("< UserController.startLogin()");
+        }
+        return result;
+    }
+    public static Result login() {
+        if (Logger.isDebugEnabled()) {
+            Logger.debug("> UserController.login()");
+        }
+        if (session().get("username") != null) {
+            session().remove("username");
+            session().remove("email");
+            return startLogin();
+        }
+        Result result = null;
+        RegisterLoginForm user = registerForm.bindFromRequest().get();
+        if (user.username == null || user.username.equals("") || user.password == null
+            || user.password.equals("")) {
+            if (Logger.isTraceEnabled()) {
+                Logger.trace("Not all required fields are filled.");
+            }
+            result = startLogin();
+        }
+        else {
+            UserMongoEntity userEntity = new UserMongoEntity(user);
+            long start = System.currentTimeMillis();
+            userEntity = userMongoBL.loadUser(userEntity);
+            long end = System.currentTimeMillis();
+            if (Logger.isDebugEnabled()) {
+                Logger.debug("User loaded in " + (end - start) + " ms");
+            }
+            if (userEntity != null) {
+                session().put("username", userEntity.username);
+                session().put("email", userEntity.email);
+                result = redirect("/");
+            }
+            else {
+                result = redirect("/");
+            }
+        }
+        return result;
+    }
+    public static Result startUserProfile() {
+        if (Logger.isDebugEnabled()) {
+            Logger.debug("> UserController.startUserProfile()");
+        }
+        if (session().get("username") == null) {
+            return redirect("/");
+        }
+        final List<PollMongoEntity> createdPolls = pollMongoBL.loadCreatedPolls(session().get(
+            "username"));
+        final Set<String> completedList = new HashSet<String>(userMongoBL
+            .loadCompletedPollsByUser(session().get("username")));
+        long start = System.currentTimeMillis();
+        Content html = views.html.userProfile.render(createdPolls, completedList);
+        long end = System.currentTimeMillis();
+        if (Logger.isDebugEnabled()) {
+            Logger.debug("User Profile Page loaded in " + (end - start) + " ms");
+        }
+        return ok(views.html.pageframe.render("content", html));
+    }
 }
